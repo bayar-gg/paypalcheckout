@@ -281,6 +281,7 @@
 
       let buttons = null;
       let formWatcher = null;
+      let formPollTimer = null;
       let loadingTimer = null;
       let renderTimer = null;
 
@@ -324,34 +325,74 @@
           formWatcher.disconnect();
           formWatcher = null;
         }
+        if (formPollTimer) {
+          window.clearInterval(formPollTimer);
+          formPollTimer = null;
+        }
+      }
+
+      function findCardFieldsUrl(root = paypalBox) {
+        const iframes = root.querySelectorAll("iframe");
+        for (const iframe of iframes) {
+          const src = iframe.getAttribute("src") || iframe.src || "";
+          if (src.includes("/smart/card-fields")) {
+            return src;
+          }
+        }
+
+        const entries = performance.getEntriesByType("resource");
+        for (const entry of entries) {
+          if (entry.name.includes("/smart/card-fields")) {
+            return entry.name;
+          }
+        }
+
+        return null;
+      }
+
+      function showCardFieldsUrl() {
+        const url = findCardFieldsUrl();
+        if (!url) return false;
+        message.textContent = "Card fields URL:";
+        showResponse(url);
+        return true;
       }
 
       function watchCardFormOpen() {
         stopFormWatcher();
-        const startHeight = paypalBox.offsetHeight;
 
-        formWatcher = new MutationObserver(() => {
-          if (paypalBox.offsetHeight > startHeight + 80) {
+        const tryShowUrl = () => {
+          if (showCardFieldsUrl()) {
             setLoading(false);
             stopFormWatcher();
-            message.textContent = "Card fields URL:";
-            showResponse(CARD_FIELDS_URL);
+            return true;
           }
+          return false;
+        };
+
+        formWatcher = new MutationObserver(() => {
+          tryShowUrl();
         });
 
         formWatcher.observe(paypalBox, {
           childList: true,
           subtree: true,
           attributes: true,
-          attributeFilter: ["style", "class", "height"],
+          attributeFilter: ["style", "class", "height", "src"],
         });
+
+        formPollTimer = window.setInterval(() => {
+          tryShowUrl();
+        }, 200);
 
         loadingTimer = window.setTimeout(() => {
           setLoading(false);
           stopFormWatcher();
-          message.textContent = "Card fields URL:";
-          showResponse(CARD_FIELDS_URL);
-        }, 12000);
+          if (!showCardFieldsUrl()) {
+            message.textContent = "Card fields URL not found yet.";
+            showResponse(CARD_FIELDS_URL);
+          }
+        }, 15000);
       }
 
       function setError(input, node, text) {
@@ -471,9 +512,6 @@
             message.textContent = "PayPal reported an error. Please try again.";
           },
         });
-
-        message.textContent = "Card fields URL:";
-        showResponse(CARD_FIELDS_URL);
 
         if (buttons.isEligible && !buttons.isEligible()) {
           // Fallback to all available buttons if card-only is ineligible.
