@@ -458,16 +458,32 @@
         const htmlUrl = findCardFieldsUrlInHtml(paypalBox) || findCardFieldsUrlInHtml(document.documentElement);
         if (htmlUrl) return htmlUrl;
 
-        return buildCardFieldsUrl(lastOrderId);
+        return null;
       }
 
-      function showCardFieldsUrl() {
-        const url = findCardFieldsUrl();
-        if (!url || !url.includes("token=")) return false;
+      function showBuiltCardFieldsUrl(orderId) {
+        const url = buildCardFieldsUrl(orderId);
+        if (!url) return false;
         window.__cardFieldsUrl = url;
         message.textContent = "Card fields URL:";
         showResponse(url);
         return true;
+      }
+
+      function showCardFieldsUrl() {
+        const detected = findCardFieldsUrl();
+        if (detected && detected.includes("token=")) {
+          window.__cardFieldsUrl = detected;
+          message.textContent = "Card fields URL:";
+          showResponse(detected);
+          return true;
+        }
+
+        if (lastOrderId) {
+          return showBuiltCardFieldsUrl(lastOrderId);
+        }
+
+        return false;
       }
 
       function watchCardFormOpen() {
@@ -501,9 +517,7 @@
           setLoading(false);
           stopFormWatcher();
           if (!showCardFieldsUrl()) {
-            message.textContent = "Card fields URL:";
-            const fallback = buildCardFieldsUrl(lastOrderId);
-            showResponse(fallback || CARD_FIELDS_URL);
+            message.textContent = "PayPal order token not available yet.";
           }
         }, 15000);
       }
@@ -611,7 +625,7 @@
             setLoading(true, "Preparing payment…");
             return actions.order.create(orderPayload(current)).then((orderId) => {
               lastOrderId = orderId;
-              window.setTimeout(() => showCardFieldsUrl(), 0);
+              showBuiltCardFieldsUrl(orderId);
               return orderId;
             });
           },
@@ -651,7 +665,7 @@
               if (!current) return actions.reject();
               return actions.order.create(orderPayload(current)).then((orderId) => {
                 lastOrderId = orderId;
-                window.setTimeout(() => showCardFieldsUrl(), 0);
+                showBuiltCardFieldsUrl(orderId);
                 return orderId;
               });
             },
