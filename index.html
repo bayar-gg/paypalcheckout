@@ -6,7 +6,6 @@
     <meta name="theme-color" content="#f5f7fb" />
     <title>Buat Invoice | Bayar</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="preconnect" href="https://www.paypal.com" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -18,24 +17,26 @@
 
       <section class="checkout-card" id="create-view">
         <div class="checkout-card__intro">
-          <p class="eyebrow">Sistem invoice</p>
+          <p class="eyebrow">PayPal Invoicing API</p>
           <h1>Buat invoice baru</h1>
-          <p>Isi data pelanggan dan jumlah tagihan, lalu lanjut ke pembayaran PayPal.</p>
+          <p>
+            Form ini memanggil API create invoice PayPal di server, lalu mengirim invoice ke email
+            pelanggan.
+          </p>
         </div>
 
         <form id="invoice-form" novalidate>
           <div class="field">
-            <label for="customer-id">Email atau username pelanggan</label>
+            <label for="customer-email">Email pelanggan</label>
             <input
-              id="customer-id"
-              name="customerId"
-              type="text"
-              autocomplete="username"
+              id="customer-email"
+              name="email"
+              type="email"
+              autocomplete="email"
               placeholder="nama@contoh.com"
               required
-              minlength="3"
             />
-            <p class="field-error" id="customer-id-error" role="alert"></p>
+            <p class="field-error" id="customer-email-error" role="alert"></p>
           </div>
 
           <div class="field">
@@ -80,20 +81,35 @@
             </div>
           </div>
 
+          <div class="field">
+            <label for="invoice-note">Catatan (opsional)</label>
+            <input
+              id="invoice-note"
+              name="note"
+              type="text"
+              maxlength="2000"
+              placeholder="Terima kasih atas pembayaran Anda."
+            />
+          </div>
+
           <p class="privacy-copy">
-            Invoice dibuat di sisi aplikasi Bayar. Login dan detail pembayaran diproses langsung oleh
+            Client Secret PayPal hanya digunakan di server. Halaman ini tidak meminta password
             PayPal.
           </p>
 
-          <button class="primary-button" type="submit">Buat invoice &amp; lanjut bayar</button>
+          <p class="form-status" id="form-status" role="status"></p>
+
+          <button class="primary-button" id="submit-invoice" type="submit">
+            Buat &amp; kirim invoice PayPal
+          </button>
         </form>
       </section>
 
       <section class="checkout-card" id="invoice-view" hidden>
         <div class="checkout-card__intro">
-          <p class="eyebrow">Invoice siap dibayar</p>
-          <h1 id="invoice-title">Bayar invoice</h1>
-          <p>Periksa detail invoice sebelum menyelesaikan pembayaran.</p>
+          <p class="eyebrow">Invoice PayPal</p>
+          <h1 id="invoice-title">Invoice siap</h1>
+          <p>Invoice sudah dibuat lewat PayPal Invoicing API dan siap dibayar.</p>
         </div>
 
         <div class="invoice-meta" aria-label="Detail invoice">
@@ -103,15 +119,15 @@
           </div>
           <div>
             <p class="order-summary__label">Status</p>
-            <p class="status-pill" id="invoice-status">Belum dibayar</p>
+            <p class="status-pill" id="invoice-status">SENT</p>
           </div>
           <div>
             <p class="order-summary__label">Pelanggan</p>
             <p class="order-summary__value" id="invoice-customer-display"></p>
           </div>
           <div>
-            <p class="order-summary__label">Dibuat</p>
-            <p class="order-summary__value" id="invoice-created-display"></p>
+            <p class="order-summary__label">PayPal ID</p>
+            <p class="order-summary__value" id="invoice-id-display"></p>
           </div>
         </div>
 
@@ -126,11 +142,14 @@
           </div>
         </div>
 
-        <div id="paypal-button-container"></div>
+        <a class="primary-button payment-link" id="pay-invoice-link" href="#" target="_blank" rel="noopener noreferrer">
+          Bayar invoice di PayPal
+        </a>
+
         <p class="payment-message" id="payment-message" role="status"></p>
 
-        <button class="secondary-button" id="edit-invoice" type="button">
-          Ubah invoice
+        <button class="secondary-button" id="create-another" type="button">
+          Buat invoice lain
         </button>
 
         <div class="security-note">
@@ -139,7 +158,7 @@
               d="M7 10V8a5 5 0 0 1 10 0v2m-9 0h8a2 2 0 0 1 2 2v7H6v-7a2 2 0 0 1 2-2Z"
             />
           </svg>
-          <span>Pembayaran diproses melalui tombol resmi PayPal.</span>
+          <span>Pembayaran dilakukan di halaman resmi PayPal Invoice.</span>
         </div>
       </section>
     </main>

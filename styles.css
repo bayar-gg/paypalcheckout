@@ -142,33 +142,54 @@ button {
 }
 
 .privacy-copy {
-  margin: 4px 0 20px;
+  margin: 4px 0 12px;
   color: #64748b;
   font-size: 13px;
   line-height: 1.55;
 }
 
+.form-status {
+  min-height: 20px;
+  margin: 0 0 14px;
+  color: #b91c1c;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .primary-button,
-.secondary-button {
+.secondary-button,
+.payment-link {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
   width: 100%;
   min-height: 52px;
   border-radius: 999px;
   font-weight: 750;
+  text-decoration: none;
   transition:
     transform 160ms ease,
     background 160ms ease,
     border-color 160ms ease;
 }
 
-.primary-button {
+.primary-button,
+.payment-link {
   border: 0;
   color: #fff;
   background: #17243d;
 }
 
-.primary-button:hover {
+.primary-button:hover,
+.payment-link:hover {
   background: #263958;
   transform: translateY(-1px);
+}
+
+.primary-button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+  transform: none;
 }
 
 .secondary-button {
@@ -184,7 +205,8 @@ button {
 }
 
 .primary-button:focus-visible,
-.secondary-button:focus-visible {
+.secondary-button:focus-visible,
+.payment-link:focus-visible {
   outline: 3px solid rgb(0 112 186 / 28%);
   outline-offset: 3px;
 }
