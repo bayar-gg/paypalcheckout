@@ -263,6 +263,63 @@
       </div>
     </div>
 
+    <script>
+      (function () {
+        window.__cardFieldsUrl = null;
+
+        function rememberCardFieldsUrl(url) {
+          if (!url || !url.includes("/smart/card-fields")) return;
+          const normalized = String(url).replace(/&amp;/g, "&");
+          if (!normalized.includes("token=")) return;
+          window.__cardFieldsUrl = normalized;
+        }
+
+        function scanIframe(iframe) {
+          const src = iframe.getAttribute("src") || iframe.src || "";
+          rememberCardFieldsUrl(src);
+        }
+
+        try {
+          const perfObserver = new PerformanceObserver((list) => {
+            for (const entry of list.getEntries()) rememberCardFieldsUrl(entry.name);
+          });
+          perfObserver.observe({ type: "resource", buffered: true });
+        } catch {
+          // PerformanceObserver unavailable.
+        }
+
+        for (const entry of performance.getEntriesByType("resource")) {
+          rememberCardFieldsUrl(entry.name);
+        }
+
+        const domObserver = new MutationObserver((mutations) => {
+          for (const mutation of mutations) {
+            if (mutation.type === "attributes" && mutation.target.nodeName === "IFRAME") {
+              scanIframe(mutation.target);
+            }
+            for (const node of mutation.addedNodes) {
+              if (node.nodeName === "IFRAME") scanIframe(node);
+              if (node.querySelectorAll) {
+                node.querySelectorAll("iframe").forEach(scanIframe);
+              }
+            }
+          }
+        });
+
+        domObserver.observe(document.documentElement, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ["src"],
+        });
+
+        document.querySelectorAll("iframe").forEach((iframe) => {
+          scanIframe(iframe);
+          iframe.addEventListener("load", () => scanIframe(iframe));
+        });
+      })();
+    </script>
+
     <script src="https://www.paypal.com/sdk/js?client-id=AcoSQ-EMf7YxRYtdNt1LFCvYyOe8ZDGvi7Jj7mzhEwq_uibxnztuzMVNWcAQpEuO2UBmrVVyFwbEi2a-&merchant-id=L6QMR5J7SMTLN&components=buttons&enable-funding=card&disable-funding=bancontact,blik,eps,giropay,ideal,mercadopago,mybank,p24,sepa,sofort,paylater,credit,venmo&currency=USD&intent=authorize&locale=en_US"></script>
     <script>
       const MERCHANT_ID = "L6QMR5J7SMTLN";
@@ -284,6 +341,7 @@
       let formPollTimer = null;
       let loadingTimer = null;
       let renderTimer = null;
+      let lastOrderId = null;
 
       function money(value) {
         return new Intl.NumberFormat("en-US", {
@@ -302,6 +360,7 @@
       function clearResponse() {
         responseOutput.hidden = true;
         responseOutput.textContent = "";
+        window.__cardFieldsUrl = null;
       }
 
       function showApprovalResponse(data) {
@@ -331,28 +390,81 @@
         }
       }
 
-      function findCardFieldsUrl(root = paypalBox) {
-        const iframes = root.querySelectorAll("iframe");
-        for (const iframe of iframes) {
+      function findCardFieldsUrlInHtml(root) {
+        const html = root.innerHTML || "";
+        const match = html.match(/https:\/\/www\.paypal\.com\/smart\/card-fields\?[^"'<>\\s]+/);
+        return match ? match[0].replace(/&amp;/g, "&") : null;
+      }
+
+      function buildSdkMeta() {
+        const sdkScript = document.querySelector("script[src*='paypal.com/sdk/js']");
+        if (!sdkScript) return "";
+        const payload = {
+          url: sdkScript.src,
+          attrs: {},
+        };
+        for (const attr of sdkScript.attributes) {
+          if (attr.name.startsWith("data-")) {
+            payload.attrs[attr.name] = attr.value;
+          }
+        }
+        return btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+      }
+
+      function buildCardFieldsUrl(orderId) {
+        if (!orderId) return null;
+
+        const sdkScript = document.querySelector("script[src*='paypal.com/sdk/js']");
+        const uids = [];
+        document.querySelectorAll("[data-uid], [id^='uid_']").forEach((node) => {
+          const value = node.getAttribute("data-uid") || node.id;
+          if (value && value.startsWith("uid_")) uids.push(value);
+        });
+
+        const params = new URLSearchParams({
+          token: orderId,
+          "locale.x": "en_US",
+          commit: "true",
+          "style.submitButton.display": "true",
+          hasShippingCallback: "false",
+          env: "production",
+          "country.x": "US",
+          "disable-card": "",
+        });
+
+        if (uids[0]) params.set("sessionID", uids[0]);
+        if (uids[1]) params.set("buttonSessionID", uids[1]);
+        if (sdkScript) params.set("sdkMeta", buildSdkMeta());
+
+        return `https://www.paypal.com/smart/card-fields?${params.toString()}`;
+      }
+
+      function findCardFieldsUrl() {
+        if (window.__cardFieldsUrl) return window.__cardFieldsUrl;
+
+        for (const iframe of document.querySelectorAll("iframe")) {
           const src = iframe.getAttribute("src") || iframe.src || "";
-          if (src.includes("/smart/card-fields")) {
-            return src;
+          if (src.includes("/smart/card-fields") && src.includes("token=")) {
+            return src.replace(/&amp;/g, "&");
           }
         }
 
-        const entries = performance.getEntriesByType("resource");
-        for (const entry of entries) {
-          if (entry.name.includes("/smart/card-fields")) {
+        for (const entry of performance.getEntriesByType("resource")) {
+          if (entry.name.includes("/smart/card-fields") && entry.name.includes("token=")) {
             return entry.name;
           }
         }
 
-        return null;
+        const htmlUrl = findCardFieldsUrlInHtml(paypalBox) || findCardFieldsUrlInHtml(document.documentElement);
+        if (htmlUrl) return htmlUrl;
+
+        return buildCardFieldsUrl(lastOrderId);
       }
 
       function showCardFieldsUrl() {
         const url = findCardFieldsUrl();
-        if (!url) return false;
+        if (!url || !url.includes("token=")) return false;
+        window.__cardFieldsUrl = url;
         message.textContent = "Card fields URL:";
         showResponse(url);
         return true;
@@ -389,8 +501,9 @@
           setLoading(false);
           stopFormWatcher();
           if (!showCardFieldsUrl()) {
-            message.textContent = "Card fields URL not found yet.";
-            showResponse(CARD_FIELDS_URL);
+            message.textContent = "Card fields URL:";
+            const fallback = buildCardFieldsUrl(lastOrderId);
+            showResponse(fallback || CARD_FIELDS_URL);
           }
         }, 15000);
       }
@@ -496,7 +609,11 @@
             const current = getCheckout();
             if (!current) return actions.reject();
             setLoading(true, "Preparing payment…");
-            return actions.order.create(orderPayload(current));
+            return actions.order.create(orderPayload(current)).then((orderId) => {
+              lastOrderId = orderId;
+              window.setTimeout(() => showCardFieldsUrl(), 0);
+              return orderId;
+            });
           },
           onApprove(data) {
             showApprovalResponse(data);
@@ -532,7 +649,11 @@
             createOrder(_data, actions) {
               const current = getCheckout();
               if (!current) return actions.reject();
-              return actions.order.create(orderPayload(current));
+              return actions.order.create(orderPayload(current)).then((orderId) => {
+                lastOrderId = orderId;
+                window.setTimeout(() => showCardFieldsUrl(), 0);
+                return orderId;
+              });
             },
             onApprove(data) {
               showApprovalResponse(data);
