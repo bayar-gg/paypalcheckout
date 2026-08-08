@@ -13,8 +13,12 @@ https://bayar-gg.github.io/paypalcheckout/
 ## SDK
 
 ```text
-https://www.paypal.com/sdk/js?client-id=AcoSQ-EMf7YxRYtdNt1LFCvYyOe8ZDGvi7Jj7mzhEwq_uibxnztuzMVNWcAQpEuO2UBmrVVyFwbEi2a-&merchant-id=L6QMR5J7SMTLN&components=buttons&enable-funding=venmo,card,credit,paylater,bancontact,blik,eps,giropay,ideal,mercadopago,mybank,p24,sepa,sofort&currency=USD&locale=en_US
+https://www.paypal.com/sdk/js?client-id=AcoSQ-EMf7YxRYtdNt1LFCvYyOe8ZDGvi7Jj7mzhEwq_uibxnztuzMVNWcAQpEuO2UBmrVVyFwbEi2a-&merchant-id=L6QMR5J7SMTLN&components=buttons,applepay&enable-funding=applepay,venmo,card,credit,paylater,bancontact,blik,eps,giropay,ideal,mercadopago,mybank,p24,sepa,sofort&currency=USD&locale=en_US
 ```
+
+Checkout uses `shipping_preference: NO_SHIPPING` so PayPal does not collect a shipping
+address. Apple Pay appears when the buyer device/browser supports it and Apple Pay is
+enabled for the PayPal app/domain.
 
 ## Local preview
 

@@ -92,6 +92,7 @@ function renderPayPalButtons(checkout) {
 
     createOrder(_data, actions) {
       return actions.order.create({
+        intent: "CAPTURE",
         purchase_units: [
           {
             description: checkout.item,
@@ -102,6 +103,19 @@ function renderPayPalButtons(checkout) {
             },
           },
         ],
+        // Hide shipping / address collection where PayPal allows it.
+        application_context: {
+          shipping_preference: "NO_SHIPPING",
+          user_action: "PAY_NOW",
+        },
+        payment_source: {
+          paypal: {
+            experience_context: {
+              shipping_preference: "NO_SHIPPING",
+              user_action: "PAY_NOW",
+            },
+          },
+        },
       });
     },
 
