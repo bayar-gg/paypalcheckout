@@ -1,49 +1,28 @@
-# Bayar PayPal Checkout + Apple Pay
+# Bayar PayPal Checkout
 
-Kode utama: `index.html`
-
+Kode utama: `index.html`  
 Live: https://bayar-gg.github.io/paypalcheckout/
 
-## Apple Pay — cara mengaktifkan
+## Fitur
 
-Kode sudah memuat `components=buttons,applepay` dan `enable-funding=applepay`.
-Tombol Apple Pay hanya muncul jika semua syarat di bawah terpenuhi.
+- Form kartu **langsung tampil** (PayPal Card Fields) — tanpa tombol Debit or Credit Card
+- Apple Pay (jika domain terdaftar + perangkat eligible)
 
-### 1) Aktifkan Apple Pay di akun PayPal
+## Agar form kartu embedded aktif
 
-1. Buka [PayPal Developer Dashboard](https://developer.paypal.com/dashboard/) (mode **Live**)
-2. Apps & Credentials → pilih app Client ID ini
-3. Features → Accept payments → centang **Apple Pay** → Save
-4. Klik **Manage** di bagian Apple Pay
+1. PayPal Developer Dashboard (Live) → Apps & Credentials → app Anda
+2. Features → Accept payments → enable **Advanced Credit and Debit Card Payments**
+3. Save, lalu refresh halaman checkout
 
-### 2) Host file domain association
+Jika belum enabled, halaman fallback ke tombol kartu PayPal.
 
-1. Download file association dari PayPal
-2. Ganti isi `.well-known/apple-developer-merchantid-domain-association`
-3. File harus bisa diakses di **root domain**:
+## Apple Pay
 
-```text
-https://bayar-gg.github.io/.well-known/apple-developer-merchantid-domain-association
-```
-
-Catatan: GitHub project Pages (`/paypalcheckout/`) tidak cukup untuk path root domain.
-Host file ini di repo `bayar-gg.github.io` atau pakai custom domain.
-
-### 3) Register domain di PayPal
-
-Di Apple Pay → Manage → Add Domain:
-
-- `bayar-gg.github.io`  
-  atau custom domain Anda
-
-### 4) Uji di perangkat Apple
-
-- Safari di iPhone/iPad/Mac dengan Apple Pay aktif
-- Kartu ada di Apple Wallet
-- HTTPS (GitHub Pages sudah HTTPS)
+1. Enable Apple Pay di app PayPal
+2. Host file domain association di root domain:
+   `https://bayar-gg.github.io/.well-known/apple-developer-merchantid-domain-association`
+3. Register domain `bayar-gg.github.io` di PayPal → Apple Pay → Manage
 
 ## GitHub Pages
-
-Jika URL 404, aktifkan Pages:
 
 Settings → Pages → Deploy from a branch → `gh-pages` / root
