@@ -87,9 +87,12 @@ button {
   text-transform: uppercase;
 }
 
-#checkout-form,
-#paypal-section {
-  margin-top: 28px;
+#partial-form {
+  margin-top: 8px;
+}
+
+#open-full-invoice {
+  margin-top: 12px;
 }
 
 .field {

@@ -1,32 +1,12 @@
-const checkoutForm = document.querySelector("#checkout-form");
-const paypalSection = document.querySelector("#paypal-section");
-const emailInput = document.querySelector("#customer-email");
-const itemInput = document.querySelector("#invoice-item");
-const amountInput = document.querySelector("#invoice-amount");
-const emailError = document.querySelector("#customer-email-error");
-const itemError = document.querySelector("#invoice-item-error");
-const amountError = document.querySelector("#invoice-amount-error");
-const summaryEmail = document.querySelector("#summary-email");
-const summaryItem = document.querySelector("#summary-item");
-const summaryTotal = document.querySelector("#summary-total");
+const INVOICE_PAY_URL = "https://www.paypal.com/invoice/p/pay/#INV2-5ASS-K9NU-SLMA-P2Y8";
+const INVOICE_ID = "INV2-5ASS-K9NU-SLMA-P2Y8";
+const STORAGE_KEY = "bayar.partialInvoiceAmount";
+
+const partialForm = document.querySelector("#partial-form");
+const amountInput = document.querySelector("#partial-amount");
+const amountError = document.querySelector("#partial-amount-error");
 const paymentMessage = document.querySelector("#payment-message");
-const editCheckoutButton = document.querySelector("#edit-checkout");
-const paypalContainer = document.querySelector("#paypal-button-container");
-
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-let activeCheckout = null;
-let paypalButtons = null;
-
-function clearFieldError(input, errorNode) {
-  errorNode.textContent = "";
-  input.removeAttribute("aria-invalid");
-}
-
-function setFieldError(input, errorNode, message) {
-  errorNode.textContent = message;
-  input.setAttribute("aria-invalid", "true");
-}
+const openFullInvoice = document.querySelector("#open-full-invoice");
 
 function formatMoney(amount) {
   return new Intl.NumberFormat("en-US", {
@@ -36,153 +16,82 @@ function formatMoney(amount) {
   }).format(Number(amount));
 }
 
-function validateCheckoutForm() {
-  let isValid = true;
-  const email = emailInput.value.trim();
-  const item = itemInput.value.trim();
+function clearAmountError() {
+  amountError.textContent = "";
+  amountInput.removeAttribute("aria-invalid");
+}
+
+function setAmountError(message) {
+  amountError.textContent = message;
+  amountInput.setAttribute("aria-invalid", "true");
+}
+
+function validateAmount() {
   const amount = Number(amountInput.value);
-
-  clearFieldError(emailInput, emailError);
-  clearFieldError(itemInput, itemError);
-  clearFieldError(amountInput, amountError);
-
-  if (!emailPattern.test(email)) {
-    setFieldError(emailInput, emailError, "Enter a valid customer email.");
-    isValid = false;
-  }
-
-  if (item.length < 3) {
-    setFieldError(itemInput, itemError, "Description must be at least 3 characters.");
-    isValid = false;
-  }
+  clearAmountError();
 
   if (!Number.isFinite(amount) || amount < 0.01) {
-    setFieldError(amountInput, amountError, "Enter an amount of at least 0.01.");
-    isValid = false;
+    setAmountError("Enter a partial amount of at least 0.01.");
+    return null;
   }
 
-  return isValid;
+  return amount.toFixed(2);
 }
 
-function destroyPayPalButtons() {
-  if (paypalButtons && typeof paypalButtons.close === "function") {
-    paypalButtons.close();
+function rememberAmount(amount) {
+  window.localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({
+      invoiceId: INVOICE_ID,
+      amount,
+      savedAt: new Date().toISOString(),
+    }),
+  );
+}
+
+function restoreAmount() {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (saved?.invoiceId === INVOICE_ID && saved?.amount) {
+      amountInput.value = saved.amount;
+    }
+  } catch {
+    // Ignore invalid localStorage data.
   }
-  paypalButtons = null;
-  paypalContainer.innerHTML = "";
 }
 
-function renderPayPalButtons(checkout) {
-  destroyPayPalButtons();
-  paymentMessage.textContent = "";
+function openInvoicePayment(amount) {
+  rememberAmount(amount);
+  paymentMessage.textContent = `Opening PayPal for partial payment of ${formatMoney(amount)}. Confirm the amount on the invoice page if asked.`;
 
-  if (!window.paypal) {
-    paymentMessage.textContent =
-      "PayPal SDK failed to load. Check your connection and refresh the page.";
-    return;
+  // PayPal hosted invoice pages do not accept amount via URL.
+  // Partial amount must be allowed on the invoice and confirmed on PayPal.
+  const paymentWindow = window.open(INVOICE_PAY_URL, "_blank", "noopener,noreferrer");
+
+  if (!paymentWindow) {
+    window.location.assign(INVOICE_PAY_URL);
   }
-
-  paypalButtons = window.paypal.Buttons({
-    style: {
-      layout: "vertical",
-      color: "gold",
-      shape: "rect",
-      label: "paypal",
-    },
-
-    createOrder(_data, actions) {
-      return actions.order.create({
-        intent: "CAPTURE",
-        purchase_units: [
-          {
-            description: checkout.item,
-            custom_id: checkout.email,
-            amount: {
-              currency_code: "USD",
-              value: checkout.amount,
-            },
-          },
-        ],
-        // Hide shipping / address collection where PayPal allows it.
-        application_context: {
-          shipping_preference: "NO_SHIPPING",
-          user_action: "PAY_NOW",
-        },
-        payment_source: {
-          paypal: {
-            experience_context: {
-              shipping_preference: "NO_SHIPPING",
-              user_action: "PAY_NOW",
-            },
-          },
-        },
-      });
-    },
-
-    async onApprove(_data, actions) {
-      paymentMessage.textContent = "Processing payment…";
-
-      try {
-        const order = await actions.order.capture();
-        paymentMessage.textContent = `Payment completed. Transaction ID: ${order.id}`;
-      } catch {
-        paymentMessage.textContent = "Payment could not be completed. Please try again.";
-      }
-    },
-
-    onCancel() {
-      paymentMessage.textContent = "Payment cancelled. You can try again.";
-    },
-
-    onError() {
-      paymentMessage.textContent = "PayPal reported an error. Please try again.";
-    },
-  });
-
-  paypalButtons.render("#paypal-button-container");
 }
 
-function showPayPalSection(checkout) {
-  activeCheckout = checkout;
-  checkoutForm.hidden = true;
-  paypalSection.hidden = false;
-  summaryEmail.textContent = checkout.email;
-  summaryItem.textContent = checkout.item;
-  summaryTotal.textContent = formatMoney(checkout.amount);
-  renderPayPalButtons(checkout);
-}
-
-function showCheckoutForm() {
-  paypalSection.hidden = true;
-  checkoutForm.hidden = false;
-  destroyPayPalButtons();
-  paymentMessage.textContent = "";
-  window.requestAnimationFrame(() => emailInput.focus());
-}
-
-checkoutForm.addEventListener("submit", (event) => {
+partialForm.addEventListener("submit", (event) => {
   event.preventDefault();
-  if (!validateCheckoutForm()) return;
-
-  showPayPalSection({
-    email: emailInput.value.trim(),
-    item: itemInput.value.trim(),
-    amount: Number(amountInput.value).toFixed(2),
-  });
+  const amount = validateAmount();
+  if (!amount) return;
+  openInvoicePayment(amount);
 });
 
-editCheckoutButton.addEventListener("click", () => {
-  if (activeCheckout) {
-    emailInput.value = activeCheckout.email;
-    itemInput.value = activeCheckout.item;
-    amountInput.value = activeCheckout.amount;
+amountInput.addEventListener("input", () => {
+  if (amountInput.hasAttribute("aria-invalid")) validateAmount();
+});
+
+openFullInvoice.addEventListener("click", () => {
+  const amount = amountInput.value.trim();
+  if (amount) {
+    const validAmount = validateAmount();
+    if (validAmount) rememberAmount(validAmount);
   }
-  showCheckoutForm();
 });
 
-[emailInput, itemInput, amountInput].forEach((input) => {
-  input.addEventListener("input", () => {
-    if (!input.hasAttribute("aria-invalid")) return;
-    validateCheckoutForm();
-  });
-});
+restoreAmount();

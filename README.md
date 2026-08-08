@@ -1,24 +1,25 @@
-# PayPal Checkout (GitHub Pages + SDK)
+# PayPal Invoice Checkout (GitHub Pages)
 
-Static checkout page using the official PayPal JavaScript SDK only.
-
-- No backend
-- No PayPal Client Secret
-- Works on GitHub Pages
+Static page that opens a specific PayPal invoice for payment, with a **Partial amount** field.
 
 ## Live URL
 
 https://bayar-gg.github.io/paypalcheckout/
 
-## SDK
+## Invoice
 
-```text
-https://www.paypal.com/sdk/js?client-id=AcoSQ-EMf7YxRYtdNt1LFCvYyOe8ZDGvi7Jj7mzhEwq_uibxnztuzMVNWcAQpEuO2UBmrVVyFwbEi2a-&merchant-id=L6QMR5J7SMTLN&components=buttons,applepay&enable-funding=applepay,venmo,card,credit,paylater,bancontact,blik,eps,giropay,ideal,mercadopago,mybank,p24,sepa,sofort&currency=USD&locale=en_US
-```
+Payment opens:
 
-Checkout uses `shipping_preference: NO_SHIPPING` so PayPal does not collect a shipping
-address. Apple Pay appears when the buyer device/browser supports it and Apple Pay is
-enabled for the PayPal app/domain.
+https://www.paypal.com/invoice/p/pay/#INV2-5ASS-K9NU-SLMA-P2Y8
+
+## Partial amount
+
+1. Enter the partial amount on this page.
+2. Continue to the official PayPal invoice page.
+3. Confirm/enter the partial amount on PayPal if the invoice allows partial payments.
+
+PayPal hosted invoice URLs do not accept the amount as a query parameter. Partial payments only
+work when the invoice itself has partial payments enabled in PayPal.
 
 ## Local preview
 
@@ -27,8 +28,3 @@ python3 -m http.server 8000
 ```
 
 Open `http://localhost:8000`.
-
-## Notes
-
-This demo creates and captures orders in the browser. For production, move order
-create/capture to a server and verify payment before fulfilling.
