@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f5f7fb" />
-    <title>Checkout | Bayar</title>
+    <title>Buat Invoice | Bayar</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://www.paypal.com" />
     <link rel="stylesheet" href="styles.css" />
@@ -16,26 +16,121 @@
         <span>Bayar</span>
       </section>
 
-      <section class="checkout-card">
+      <section class="checkout-card" id="create-view">
         <div class="checkout-card__intro">
-          <p class="eyebrow">Checkout aman</p>
-          <h1>Selesaikan pembayaran</h1>
-          <p>Periksa pesanan Anda sebelum melanjutkan ke PayPal.</p>
+          <p class="eyebrow">Sistem invoice</p>
+          <h1>Buat invoice baru</h1>
+          <p>Isi data pelanggan dan jumlah tagihan, lalu lanjut ke pembayaran PayPal.</p>
         </div>
 
-        <div class="order-summary" aria-label="Ringkasan pesanan">
+        <form id="invoice-form" novalidate>
+          <div class="field">
+            <label for="customer-id">Email atau username pelanggan</label>
+            <input
+              id="customer-id"
+              name="customerId"
+              type="text"
+              autocomplete="username"
+              placeholder="nama@contoh.com"
+              required
+              minlength="3"
+            />
+            <p class="field-error" id="customer-id-error" role="alert"></p>
+          </div>
+
+          <div class="field">
+            <label for="invoice-item">Deskripsi tagihan</label>
+            <input
+              id="invoice-item"
+              name="item"
+              type="text"
+              placeholder="Contoh: Langganan layanan bulanan"
+              required
+              minlength="3"
+              maxlength="120"
+            />
+            <p class="field-error" id="invoice-item-error" role="alert"></p>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="invoice-amount">Jumlah</label>
+              <input
+                id="invoice-amount"
+                name="amount"
+                type="number"
+                inputmode="decimal"
+                min="0.01"
+                step="0.01"
+                placeholder="50.84"
+                required
+              />
+              <p class="field-error" id="invoice-amount-error" role="alert"></p>
+            </div>
+
+            <div class="field">
+              <label for="invoice-currency">Mata uang</label>
+              <select id="invoice-currency" name="currency">
+                <option value="USD" selected>USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="SGD">SGD</option>
+                <option value="AUD">AUD</option>
+              </select>
+            </div>
+          </div>
+
+          <p class="privacy-copy">
+            Invoice dibuat di sisi aplikasi Bayar. Login dan detail pembayaran diproses langsung oleh
+            PayPal.
+          </p>
+
+          <button class="primary-button" type="submit">Buat invoice &amp; lanjut bayar</button>
+        </form>
+      </section>
+
+      <section class="checkout-card" id="invoice-view" hidden>
+        <div class="checkout-card__intro">
+          <p class="eyebrow">Invoice siap dibayar</p>
+          <h1 id="invoice-title">Bayar invoice</h1>
+          <p>Periksa detail invoice sebelum menyelesaikan pembayaran.</p>
+        </div>
+
+        <div class="invoice-meta" aria-label="Detail invoice">
           <div>
-            <p class="order-summary__label">Invoice</p>
-            <p class="order-summary__value">INV-2026-001</p>
+            <p class="order-summary__label">Nomor invoice</p>
+            <p class="order-summary__value" id="invoice-number-display"></p>
+          </div>
+          <div>
+            <p class="order-summary__label">Status</p>
+            <p class="status-pill" id="invoice-status">Belum dibayar</p>
+          </div>
+          <div>
+            <p class="order-summary__label">Pelanggan</p>
+            <p class="order-summary__value" id="invoice-customer-display"></p>
+          </div>
+          <div>
+            <p class="order-summary__label">Dibuat</p>
+            <p class="order-summary__value" id="invoice-created-display"></p>
+          </div>
+        </div>
+
+        <div class="order-summary" aria-label="Ringkasan tagihan">
+          <div>
+            <p class="order-summary__label">Deskripsi</p>
+            <p class="order-summary__value" id="invoice-item-display"></p>
           </div>
           <div>
             <p class="order-summary__label">Total pembayaran</p>
-            <p class="order-summary__total">$50.84 USD</p>
+            <p class="order-summary__total" id="invoice-total-display"></p>
           </div>
         </div>
 
-        <button class="primary-button" id="open-customer-modal" type="button">
-          Lanjut ke pembayaran
+        <div id="paypal-button-container"></div>
+        <p class="payment-message" id="payment-message" role="status"></p>
+
+        <button class="secondary-button" id="edit-invoice" type="button">
+          Ubah invoice
         </button>
 
         <div class="security-note">
@@ -44,57 +139,11 @@
               d="M7 10V8a5 5 0 0 1 10 0v2m-9 0h8a2 2 0 0 1 2 2v7H6v-7a2 2 0 0 1 2-2Z"
             />
           </svg>
-          <span>Login dan detail pembayaran diproses langsung oleh PayPal.</span>
+          <span>Pembayaran diproses melalui tombol resmi PayPal.</span>
         </div>
       </section>
     </main>
 
-    <dialog class="customer-modal" id="customer-modal">
-      <div class="customer-modal__header">
-        <div>
-          <p class="eyebrow">Informasi pelanggan</p>
-          <h2>Masukkan data Anda</h2>
-        </div>
-        <button class="icon-button" id="close-customer-modal" type="button" aria-label="Tutup">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="m6 6 12 12M18 6 6 18" />
-          </svg>
-        </button>
-      </div>
-
-      <form id="customer-form" novalidate>
-        <label for="customer-id">Email atau username</label>
-        <input
-          id="customer-id"
-          name="customerId"
-          type="text"
-          autocomplete="username"
-          placeholder="nama@contoh.com"
-          required
-          minlength="3"
-        />
-        <p class="field-error" id="customer-id-error" role="alert"></p>
-
-        <p class="privacy-copy">
-          Data ini digunakan oleh Bayar untuk mengidentifikasi pesanan. Kami tidak meminta password
-          PayPal.
-        </p>
-
-        <button class="primary-button" type="submit">Tampilkan opsi PayPal</button>
-      </form>
-
-      <section class="paypal-section" id="paypal-section" hidden>
-        <div class="customer-confirmation">
-          <span>Pembayaran untuk</span>
-          <strong id="customer-display"></strong>
-          <button id="edit-customer" type="button">Ubah</button>
-        </div>
-        <div id="paypal-button-container"></div>
-        <p class="payment-message" id="payment-message" role="status"></p>
-      </section>
-    </dialog>
-
-    <script src="https://www.paypal.com/sdk/js?client-id=BAAGzXCZncFT6EE2MtBDQzs-VIHJnr0AjVrFzM2bMc08EyBDkRq9gxywXToh_dhanfpEfuV673RlJieBbE&currency=USD&intent=capture"></script>
     <script src="app.js"></script>
   </body>
 </html>

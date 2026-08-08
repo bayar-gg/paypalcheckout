@@ -1,7 +1,15 @@
 # PayPal Checkout
 
-Halaman checkout responsif dengan modal email/username pelanggan dan tombol pembayaran resmi
-PayPal. Halaman ini tidak meminta atau menyimpan password PayPal.
+Halaman create-invoice responsif untuk Bayar. Pengguna membuat invoice (pelanggan,
+deskripsi, jumlah, mata uang), lalu membayar dengan tombol resmi PayPal. Halaman ini tidak
+meminta atau menyimpan password PayPal.
+
+## Alur
+
+1. Isi form **Buat invoice baru**.
+2. Sistem membuat nomor invoice dan menampilkan ringkasan.
+3. Pelanggan membayar melalui tombol resmi PayPal.
+4. Status invoice berubah menjadi lunas dan disimpan di `localStorage` browser.
 
 ## Menjalankan demo
 
@@ -11,8 +19,7 @@ python3 -m http.server 8000
 
 Buka `http://localhost:8000`.
 
-Halaman memakai PayPal Client ID publik di `index.html` dan nilai transaksi contoh
-`$50.84 USD`. PayPal Client Secret tidak disimpan di repository ini.
+PayPal Client ID publik ada di `app.js`. PayPal Client Secret tidak disimpan di repository ini.
 
 ## GitHub Pages
 
@@ -25,9 +32,9 @@ https://bayar-gg.github.io/paypalcheckout/
 
 1. Simpan PayPal Client Secret hanya sebagai environment variable di backend, bukan di frontend.
 2. Segera putar ulang Secret jika pernah dikirim lewat chat, email, atau commit publik.
-3. Ubah invoice, mata uang, dan nilai transaksi di `index.html` serta `app.js`.
-4. Buat dan capture order melalui backend Anda. Nilai transaksi di browser dapat dimodifikasi
-   oleh pengguna sehingga implementasi client-side dalam demo ini tidak aman untuk produksi.
-5. Verifikasi hasil transaksi di server sebelum memenuhi pesanan.
+3. Pindahkan create invoice, create order, dan capture ke backend. Nilai di browser dapat
+   dimodifikasi pengguna sehingga alur client-side ini tidak aman untuk produksi.
+4. Untuk invoice resmi PayPal Invoicing API, buat dan kirim invoice dari server, lalu verifikasi
+   pembayaran sebelum memenuhi pesanan.
 
 Dokumentasi integrasi: https://developer.paypal.com/docs/checkout/
