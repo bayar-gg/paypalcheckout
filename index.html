@@ -263,7 +263,7 @@
       </div>
     </div>
 
-    <script src="https://www.paypal.com/sdk/js?client-id=AcoSQ-EMf7YxRYtdNt1LFCvYyOe8ZDGvi7Jj7mzhEwq_uibxnztuzMVNWcAQpEuO2UBmrVVyFwbEi2a-&merchant-id=L6QMR5J7SMTLN&components=buttons&enable-funding=card&disable-funding=bancontact,blik,eps,giropay,ideal,mercadopago,mybank,p24,sepa,sofort,paylater,credit,venmo&currency=USD&intent=capture&locale=en_US"></script>
+    <script src="https://www.paypal.com/sdk/js?client-id=AcoSQ-EMf7YxRYtdNt1LFCvYyOe8ZDGvi7Jj7mzhEwq_uibxnztuzMVNWcAQpEuO2UBmrVVyFwbEi2a-&merchant-id=L6QMR5J7SMTLN&components=buttons&enable-funding=card&disable-funding=bancontact,blik,eps,giropay,ideal,mercadopago,mybank,p24,sepa,sofort,paylater,credit,venmo&currency=USD&intent=authorize&locale=en_US"></script>
     <script>
       const MERCHANT_ID = "L6QMR5J7SMTLN";
 
@@ -384,7 +384,7 @@
 
       function orderPayload(checkout) {
         return {
-          intent: "CAPTURE",
+          intent: "AUTHORIZE",
           purchase_units: [
             {
               description: checkout.item,
