@@ -178,8 +178,13 @@
         background: #fff;
       }
 
-      #paypal-button-container {
-        min-height: 55px;
+      #paypal-button-container,
+      #applepay-button-container {
+        min-height: 0;
+      }
+
+      #applepay-button-container {
+        margin-bottom: 10px;
       }
 
       .msg {
@@ -210,9 +215,11 @@
       <div class="brand">Bayar</div>
 
       <section class="card">
-        <p class="eyebrow">PayPal Smart Buttons</p>
+        <p class="eyebrow">PayPal + Apple Pay</p>
         <h1>Complete your payment</h1>
-        <p class="lead">Pay with debit or credit card through the official PayPal button.</p>
+        <p class="lead">
+          Pay with Apple Pay (Safari / iPhone) or debit/credit card through official PayPal buttons.
+        </p>
 
         <form id="checkout-form" novalidate>
           <div class="field">
@@ -233,7 +240,7 @@
             <p class="error" id="amount-error"></p>
           </div>
 
-          <button class="btn" type="submit">Continue to card payment</button>
+          <button class="btn" type="submit">Continue to payment</button>
         </form>
 
         <section id="paypal-section" hidden>
@@ -250,16 +257,19 @@
             </div>
           </div>
 
+          <div id="applepay-button-container"></div>
           <div id="paypal-button-container"></div>
           <p class="msg" id="message"></p>
           <button class="link-btn" id="edit" type="button">Edit details</button>
         </section>
 
-        <p class="note">Card checkout is rendered by official PayPal Smart Buttons.</p>
+        <p class="note">
+          Apple Pay appears only on eligible Apple devices after the domain is registered in PayPal.
+        </p>
       </section>
     </main>
 
-    <script src="https://www.paypal.com/sdk/js?client-id=AcoSQ-EMf7YxRYtdNt1LFCvYyOe8ZDGvi7Jj7mzhEwq_uibxnztuzMVNWcAQpEuO2UBmrVVyFwbEi2a-&merchant-id=L6QMR5J7SMTLN&components=buttons&enable-funding=credit,venmo,card&disable-funding=bancontact,blik,eps,giropay,ideal,mercadopago,mybank,p24,sepa,sofort,paylater&currency=USD&intent=capture&locale=en_US"></script>
+    <script src="https://www.paypal.com/sdk/js?client-id=AcoSQ-EMf7YxRYtdNt1LFCvYyOe8ZDGvi7Jj7mzhEwq_uibxnztuzMVNWcAQpEuO2UBmrVVyFwbEi2a-&merchant-id=L6QMR5J7SMTLN&components=buttons,applepay&enable-funding=applepay,credit,venmo,card&disable-funding=bancontact,blik,eps,giropay,ideal,mercadopago,mybank,p24,sepa,sofort,paylater&currency=USD&intent=capture&locale=en_US"></script>
     <script>
       const form = document.querySelector("#checkout-form");
       const section = document.querySelector("#paypal-section");
@@ -274,11 +284,12 @@
       const summaryTotal = document.querySelector("#summary-total");
       const message = document.querySelector("#message");
       const edit = document.querySelector("#edit");
-      const container = document.querySelector("#paypal-button-container");
+      const appleContainer = document.querySelector("#applepay-button-container");
+      const paypalContainer = document.querySelector("#paypal-button-container");
       const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
       let checkout = null;
-      let buttons = null;
+      const renderedButtons = [];
 
       function money(value) {
         return new Intl.NumberFormat("en-US", {
@@ -295,59 +306,52 @@
       }
 
       function validate() {
-        let ok = true;
         const amountValue = Number(amount.value);
-
         setError(email, emailError, emailOk.test(email.value.trim()) ? "" : "Enter a valid email.");
         setError(item, itemError, item.value.trim().length >= 3 ? "" : "Description is required.");
-        setError(amount, amountError, Number.isFinite(amountValue) && amountValue >= 0.01 ? "" : "Enter amount >= 0.01.");
-
-        if (!emailOk.test(email.value.trim()) || item.value.trim().length < 3 || !(Number.isFinite(amountValue) && amountValue >= 0.01)) {
-          ok = false;
-        }
-
-        return ok;
+        setError(
+          amount,
+          amountError,
+          Number.isFinite(amountValue) && amountValue >= 0.01 ? "" : "Enter amount >= 0.01.",
+        );
+        return (
+          emailOk.test(email.value.trim()) &&
+          item.value.trim().length >= 3 &&
+          Number.isFinite(amountValue) &&
+          amountValue >= 0.01
+        );
       }
 
       function destroyButtons() {
-        if (buttons && typeof buttons.close === "function") buttons.close();
-        buttons = null;
-        container.innerHTML = "";
+        renderedButtons.forEach((button) => {
+          if (button && typeof button.close === "function") button.close();
+        });
+        renderedButtons.length = 0;
+        appleContainer.innerHTML = "";
+        paypalContainer.innerHTML = "";
       }
 
-      function renderButtons(data) {
-        destroyButtons();
-        message.textContent = "";
-
-        if (!window.paypal) {
-          message.textContent = "PayPal SDK failed to load.";
-          return;
-        }
-
-        const options = {
-          style: {
-            layout: "horizontal",
-            color: "black",
-            shape: "rect",
-            tagline: false,
-            height: 55,
-            label: "pay",
+      function orderConfig(data) {
+        return {
+          intent: "CAPTURE",
+          purchase_units: [
+            {
+              description: data.item,
+              custom_id: data.email,
+              amount: { currency_code: "USD", value: data.amount },
+            },
+          ],
+          application_context: {
+            shipping_preference: "NO_SHIPPING",
+            user_action: "PAY_NOW",
           },
+        };
+      }
+
+      function sharedHandlers() {
+        return {
           createOrder(_d, actions) {
-            return actions.order.create({
-              intent: "CAPTURE",
-              purchase_units: [
-                {
-                  description: data.item,
-                  custom_id: data.email,
-                  amount: { currency_code: "USD", value: data.amount },
-                },
-              ],
-              application_context: {
-                shipping_preference: "NO_SHIPPING",
-                user_action: "PAY_NOW",
-              },
-            });
+            return actions.order.create(orderConfig(checkout));
           },
           async onApprove(_d, actions) {
             message.textContent = "Processing payment…";
@@ -365,15 +369,73 @@
             message.textContent = "PayPal reported an error.";
           },
         };
+      }
 
-        if (window.paypal.FUNDING?.CARD) options.fundingSource = window.paypal.FUNDING.CARD;
+      function renderFundingButton(fundingSource, container, style) {
+        if (!window.paypal?.Buttons || !fundingSource) return false;
 
-        buttons = window.paypal.Buttons(options);
-        if (buttons.isEligible && !buttons.isEligible()) {
-          delete options.fundingSource;
-          buttons = window.paypal.Buttons(options);
+        const button = window.paypal.Buttons({
+          fundingSource,
+          style,
+          ...sharedHandlers(),
+        });
+
+        if (button.isEligible && !button.isEligible()) return false;
+        button.render(container);
+        renderedButtons.push(button);
+        return true;
+      }
+
+      function renderButtons() {
+        destroyButtons();
+        message.textContent = "";
+
+        if (!window.paypal) {
+          message.textContent = "PayPal SDK failed to load.";
+          return;
         }
-        buttons.render("#paypal-button-container");
+
+        const appleShown = renderFundingButton(
+          window.paypal.FUNDING?.APPLEPAY,
+          "#applepay-button-container",
+          {
+            layout: "vertical",
+            color: "black",
+            shape: "rect",
+            tagline: false,
+            height: 55,
+            label: "pay",
+          },
+        );
+
+        const cardShown = renderFundingButton(window.paypal.FUNDING?.CARD, "#paypal-button-container", {
+          layout: "vertical",
+          color: "black",
+          shape: "rect",
+          tagline: false,
+          height: 55,
+          label: "pay",
+        });
+
+        if (!appleShown && !cardShown) {
+          const fallback = window.paypal.Buttons({
+            style: {
+              layout: "vertical",
+              color: "black",
+              shape: "rect",
+              tagline: false,
+              height: 55,
+            },
+            ...sharedHandlers(),
+          });
+          fallback.render("#paypal-button-container");
+          renderedButtons.push(fallback);
+          message.textContent =
+            "Apple Pay is unavailable on this device/domain. Showing available PayPal buttons.";
+        } else if (!appleShown) {
+          message.textContent =
+            "Apple Pay not available here yet. Use an eligible Apple device after domain registration, or pay by card.";
+        }
       }
 
       form.addEventListener("submit", (event) => {
@@ -391,7 +453,7 @@
         summaryEmail.textContent = checkout.email;
         summaryItem.textContent = checkout.item;
         summaryTotal.textContent = money(checkout.amount);
-        renderButtons(checkout);
+        renderButtons();
       });
 
       edit.addEventListener("click", () => {
