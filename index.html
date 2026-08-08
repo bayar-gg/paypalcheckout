@@ -153,6 +153,26 @@
         text-align: center;
       }
 
+      .response {
+        max-height: 320px;
+        margin: 14px 0 0;
+        padding: 14px;
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #0f172a;
+        color: #e2e8f0;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .response[hidden] {
+        display: none;
+      }
+
       .loading-overlay {
         position: fixed;
         inset: 0;
@@ -231,6 +251,7 @@
 
         <div id="paypal-iframe-box"></div>
         <p class="msg" id="message"></p>
+        <pre class="response" id="response-output" hidden></pre>
         <p class="note">Powered by PayPal. Tap Debit or Credit Card to open the card form.</p>
       </section>
     </main>
@@ -253,6 +274,7 @@
       const totalDisplay = document.querySelector("#total-display");
       const paypalBox = document.querySelector("#paypal-iframe-box");
       const message = document.querySelector("#message");
+      const responseOutput = document.querySelector("#response-output");
       const loadingOverlay = document.querySelector("#loading-overlay");
       const loadingText = document.querySelector("#loading-text");
 
@@ -267,6 +289,24 @@
           currency: "USD",
           minimumFractionDigits: 2,
         }).format(Number(value));
+      }
+
+      function showResponse(payload) {
+        responseOutput.hidden = false;
+        responseOutput.textContent =
+          typeof payload === "string" ? payload : JSON.stringify(payload, null, 2);
+      }
+
+      function clearResponse() {
+        responseOutput.hidden = true;
+        responseOutput.textContent = "";
+      }
+
+      function showApprovalResponse(data) {
+        stopFormWatcher();
+        setLoading(false);
+        message.textContent = "Card response received. Order was not captured.";
+        showResponse(data);
       }
 
       function setLoading(on, text) {
@@ -375,6 +415,7 @@
         totalDisplay.textContent = money(amount.value || 0);
 
         destroyButtons();
+        clearResponse();
 
         if (!checkout) {
           message.textContent = "Enter a valid description and amount to enable payment.";
@@ -400,6 +441,7 @@
           },
           onClick() {
             if (!getCheckout()) return false;
+            clearResponse();
             setLoading(true, "Loading card form…");
             watchCardFormOpen();
             return true;
@@ -410,16 +452,8 @@
             setLoading(true, "Preparing payment…");
             return actions.order.create(orderPayload(current));
           },
-          async onApprove(_data, actions) {
-            setLoading(true, "Processing payment…");
-            try {
-              const order = await actions.order.capture();
-              setLoading(false);
-              message.textContent = `Payment completed. Transaction ID: ${order.id}`;
-            } catch {
-              setLoading(false);
-              message.textContent = "Payment could not be completed.";
-            }
+          onApprove(data) {
+            showApprovalResponse(data);
           },
           onCancel() {
             setLoading(false);
@@ -444,6 +478,7 @@
               tagline: false,
             },
             onClick() {
+              clearResponse();
               setLoading(true, "Loading card form…");
               watchCardFormOpen();
               return true;
@@ -453,16 +488,8 @@
               if (!current) return actions.reject();
               return actions.order.create(orderPayload(current));
             },
-            async onApprove(_data, actions) {
-              setLoading(true, "Processing payment…");
-              try {
-                const order = await actions.order.capture();
-                setLoading(false);
-                message.textContent = `Payment completed. Transaction ID: ${order.id}`;
-              } catch {
-                setLoading(false);
-                message.textContent = "Payment could not be completed.";
-              }
+            onApprove(data) {
+              showApprovalResponse(data);
             },
             onCancel() {
               setLoading(false);
