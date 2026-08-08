@@ -1,25 +1,28 @@
-# PayPal Invoice Checkout (GitHub Pages)
+# PayPal Smart Buttons Checkout
 
-Static page that opens a specific PayPal invoice for payment, with a **Partial amount** field.
+Static GitHub Pages checkout using the official PayPal JS SDK, configured like PayPal
+Smart Buttons for **card** funding.
 
 ## Live URL
 
 https://bayar-gg.github.io/paypalcheckout/
 
-## Invoice
+## SDK config
 
-Payment opens:
+```text
+https://www.paypal.com/sdk/js?client-id=AcoSQ-EMf7YxRYtdNt1LFCvYyOe8ZDGvi7Jj7mzhEwq_uibxnztuzMVNWcAQpEuO2UBmrVVyFwbEi2a-&merchant-id=L6QMR5J7SMTLN&components=buttons&enable-funding=credit,venmo,card&disable-funding=bancontact,blik,eps,giropay,ideal,mercadopago,mybank,p24,sepa,sofort,paylater&currency=USD&intent=capture&locale=en_US
+```
 
-https://www.paypal.com/invoice/p/pay/#INV2-5ASS-K9NU-SLMA-P2Y8
+Button style matched from the smart/buttons request:
 
-## Partial amount
+- `layout: horizontal`
+- `color: black`
+- `shape: rect`
+- `tagline: false`
+- `fundingSource: card`
 
-1. Enter the partial amount on this page.
-2. Continue to the official PayPal invoice page.
-3. Confirm/enter the partial amount on PayPal if the invoice allows partial payments.
-
-PayPal hosted invoice URLs do not accept the amount as a query parameter. Partial payments only
-work when the invoice itself has partial payments enabled in PayPal.
+The raw `https://www.paypal.com/smart/buttons?...` URL is an internal PayPal iframe endpoint
+and is not embedded directly. Equivalent options are applied through the public SDK.
 
 ## Local preview
 

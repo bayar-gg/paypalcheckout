@@ -87,12 +87,13 @@ button {
   text-transform: uppercase;
 }
 
-#partial-form {
-  margin-top: 8px;
+#checkout-form,
+#paypal-section {
+  margin-top: 28px;
 }
 
-#open-full-invoice {
-  margin-top: 12px;
+#paypal-button-container {
+  min-height: 55px;
 }
 
 .field {
