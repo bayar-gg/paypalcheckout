@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Checkout | Bayar</title>
+    <link rel="preconnect" href="https://www.paypal.com" />
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Georgia, "Times New Roman", serif;
+        color: #17243d;
+        --accent: #0b3d2e;
+        --muted: #5b6b7c;
+        --line: #d7e0ea;
+        --bg: #eef3f7;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        background:
+          radial-gradient(circle at top right, rgb(11 61 46 / 12%), transparent 28rem),
+          linear-gradient(180deg, #f7fafc 0%, var(--bg) 100%);
+      }
+
+      main {
+        width: min(100% - 32px, 560px);
+        margin: 0 auto;
+        padding: 40px 0 64px;
+      }
+
+      .brand {
+        margin-bottom: 28px;
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+      }
+
+      .card {
+        padding: 28px;
+        border: 1px solid rgb(23 36 61 / 8%);
+        border-radius: 20px;
+        background: rgb(255 255 255 / 92%);
+        box-shadow: 0 18px 50px rgb(23 36 61 / 8%);
+      }
+
+      .eyebrow {
+        margin: 0 0 8px;
+        color: var(--accent);
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: clamp(30px, 7vw, 40px);
+        line-height: 1.1;
+      }
+
+      .lead,
+      .note,
+      .msg {
+        color: var(--muted);
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-size: 14px;
+        line-height: 1.55;
+      }
+
+      .lead {
+        margin: 0 0 24px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .field {
+        margin-bottom: 14px;
+      }
+
+      input {
+        width: 100%;
+        height: 50px;
+        padding: 0 14px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        color: #0f172a;
+        background: #fff;
+        font: inherit;
+        outline: none;
+      }
+
+      input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 4px rgb(11 61 46 / 12%);
+      }
+
+      input[aria-invalid="true"] {
+        border-color: #dc2626;
+      }
+
+      .error {
+        min-height: 18px;
+        margin: 6px 0 0;
+        color: #b91c1c;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-size: 12px;
+      }
+
+      .total-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin: 8px 0 18px;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+      }
+
+      .total-line span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .total-line strong {
+        font-size: 28px;
+        font-weight: 800;
+      }
+
+      #paypal-iframe-box {
+        min-height: 55px;
+      }
+
+      .msg {
+        min-height: 20px;
+        margin: 12px 0 0;
+        color: #166534;
+        text-align: center;
+      }
+
+      .note {
+        margin: 18px 0 0;
+        text-align: center;
+      }
+
+      .response {
+        max-height: 320px;
+        margin: 14px 0 0;
+        padding: 14px;
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #0f172a;
+        color: #e2e8f0;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .response[hidden] {
+        display: none;
+      }
+
+      .loading-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: grid;
+        place-items: center;
+        background: rgb(15 23 42 / 45%);
+        backdrop-filter: blur(2px);
+      }
+
+      .loading-overlay[hidden] {
+        display: none;
+      }
+
+      .loading-panel {
+        display: grid;
+        gap: 14px;
+        justify-items: center;
+        width: min(100% - 48px, 280px);
+        padding: 24px 20px;
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: 0 18px 50px rgb(15 23 42 / 25%);
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        text-align: center;
+      }
+
+      .spinner {
+        width: 36px;
+        height: 36px;
+        border: 3px solid #e2e8f0;
+        border-top-color: #111;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      .loading-panel p {
+        margin: 0;
+        color: #334155;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="brand">Bayar</div>
+
+      <section class="card">
+        <p class="eyebrow">PayPal checkout</p>
+        <h1>Pay now</h1>
+        <p class="lead">Enter description and amount, then pay with the PayPal card form below.</p>
+
+        <div class="field">
+          <label for="item">Description</label>
+          <input id="item" type="text" value="Invoice payment" required minlength="3" maxlength="120" />
+          <p class="error" id="item-error"></p>
+        </div>
+
+        <div class="field">
+          <label for="amount">Amount (USD)</label>
+          <input id="amount" type="number" inputmode="decimal" min="0.01" step="0.01" value="50.84" required />
+          <p class="error" id="amount-error"></p>
+        </div>
+
+        <div class="total-line">
+          <span>Total</span>
+          <strong id="total-display">$50.84</strong>
+        </div>
+
+        <div id="paypal-iframe-box"></div>
+        <p class="msg" id="message"></p>
+        <pre class="response" id="response-output" hidden></pre>
+        <p class="note">Powered by PayPal. Tap Debit or Credit Card to open the card form.</p>
+      </section>
+    </main>
+
+    <div class="loading-overlay" id="loading-overlay" hidden>
+      <div class="loading-panel" role="status" aria-live="polite">
+        <div class="spinner" aria-hidden="true"></div>
+        <p id="loading-text">Loading card form…</p>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        window.__cardFieldsUrl = null;
+
+        function rememberCardFieldsUrl(url) {
+          if (!url || !url.includes("/smart/card-fields")) return;
+          const normalized = String(url).replace(/&amp;/g, "&");
+          if (!normalized.includes("token=")) return;
+          window.__cardFieldsUrl = normalized;
+        }
+
+        function scanIframe(iframe) {
+          const src = iframe.getAttribute("src") || iframe.src || "";
+          rememberCardFieldsUrl(src);
+        }
+
+        try {
+          const perfObserver = new PerformanceObserver((list) => {
+            for (const entry of list.getEntries()) rememberCardFieldsUrl(entry.name);
+          });
+          perfObserver.observe({ type: "resource", buffered: true });
+        } catch {
+          // PerformanceObserver unavailable.
+        }
+
+        for (const entry of performance.getEntriesByType("resource")) {
+          rememberCardFieldsUrl(entry.name);
+        }
+
+        const domObserver = new MutationObserver((mutations) => {
+          for (const mutation of mutations) {
+            if (mutation.type === "attributes" && mutation.target.nodeName === "IFRAME") {
+              scanIframe(mutation.target);
+            }
+            for (const node of mutation.addedNodes) {
+              if (node.nodeName === "IFRAME") scanIframe(node);
+              if (node.querySelectorAll) {
+                node.querySelectorAll("iframe").forEach(scanIframe);
+              }
+            }
+          }
+        });
+
+        domObserver.observe(document.documentElement, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ["src"],
+        });
+
+        document.querySelectorAll("iframe").forEach((iframe) => {
+          scanIframe(iframe);
+          iframe.addEventListener("load", () => scanIframe(iframe));
+        });
+      })();
+    </script>
+
+    <script src="https://www.paypal.com/sdk/js?client-id=AcoSQ-EMf7YxRYtdNt1LFCvYyOe8ZDGvi7Jj7mzhEwq_uibxnztuzMVNWcAQpEuO2UBmrVVyFwbEi2a-&merchant-id=L6QMR5J7SMTLN&components=buttons&enable-funding=card&disable-funding=bancontact,blik,eps,giropay,ideal,mercadopago,mybank,p24,sepa,sofort,paylater,credit,venmo&currency=USD&intent=authorize&locale=en_US"></script>
+    <script>
+      const MERCHANT_ID = "L6QMR5J7SMTLN";
+      const CARD_FIELDS_URL = "https://www.paypal.com/smart/card-fields";
+
+      const item = document.querySelector("#item");
+      const amount = document.querySelector("#amount");
+      const itemError = document.querySelector("#item-error");
+      const amountError = document.querySelector("#amount-error");
+      const totalDisplay = document.querySelector("#total-display");
+      const paypalBox = document.querySelector("#paypal-iframe-box");
+      const message = document.querySelector("#message");
+      const responseOutput = document.querySelector("#response-output");
+      const loadingOverlay = document.querySelector("#loading-overlay");
+      const loadingText = document.querySelector("#loading-text");
+
+      let buttons = null;
+      let formWatcher = null;
+      let formPollTimer = null;
+      let loadingTimer = null;
+      let renderTimer = null;
+      let lastOrderId = null;
+
+      function money(value) {
+        return new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+          minimumFractionDigits: 2,
+        }).format(Number(value));
+      }
+
+      function showResponse(payload) {
+        responseOutput.hidden = false;
+        responseOutput.textContent =
+          typeof payload === "string" ? payload : JSON.stringify(payload, null, 2);
+      }
+
+      function clearResponse() {
+        responseOutput.hidden = true;
+        responseOutput.textContent = "";
+        window.__cardFieldsUrl = null;
+      }
+
+      function showApprovalResponse(data) {
+        stopFormWatcher();
+        setLoading(false);
+        message.textContent = "Card response received. Order was not captured.";
+        showResponse(data);
+      }
+
+      function setLoading(on, text) {
+        if (text) loadingText.textContent = text;
+        loadingOverlay.hidden = !on;
+        if (!on && loadingTimer) {
+          window.clearTimeout(loadingTimer);
+          loadingTimer = null;
+        }
+      }
+
+      function stopFormWatcher() {
+        if (formWatcher) {
+          formWatcher.disconnect();
+          formWatcher = null;
+        }
+        if (formPollTimer) {
+          window.clearInterval(formPollTimer);
+          formPollTimer = null;
+        }
+      }
+
+      function findCardFieldsUrlInHtml(root) {
+        const html = root.innerHTML || "";
+        const match = html.match(/https:\/\/www\.paypal\.com\/smart\/card-fields\?[^"'<>\\s]+/);
+        return match ? match[0].replace(/&amp;/g, "&") : null;
+      }
+
+      function buildSdkMeta() {
+        const sdkScript = document.querySelector("script[src*='paypal.com/sdk/js']");
+        if (!sdkScript) return "";
+        const payload = {
+          url: sdkScript.src,
+          attrs: {},
+        };
+        for (const attr of sdkScript.attributes) {
+          if (attr.name.startsWith("data-")) {
+            payload.attrs[attr.name] = attr.value;
+          }
+        }
+        return btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+      }
+
+      function buildCardFieldsUrl(orderId) {
+        if (!orderId) return null;
+
+        const sdkScript = document.querySelector("script[src*='paypal.com/sdk/js']");
+        const uids = [];
+        document.querySelectorAll("[data-uid], [id^='uid_']").forEach((node) => {
+          const value = node.getAttribute("data-uid") || node.id;
+          if (value && value.startsWith("uid_")) uids.push(value);
+        });
+
+        const params = new URLSearchParams({
+          token: orderId,
+          "locale.x": "en_US",
+          commit: "true",
+          "style.submitButton.display": "true",
+          hasShippingCallback: "false",
+          env: "production",
+          "country.x": "US",
+          "disable-card": "",
+        });
+
+        if (uids[0]) params.set("sessionID", uids[0]);
+        if (uids[1]) params.set("buttonSessionID", uids[1]);
+        if (sdkScript) params.set("sdkMeta", buildSdkMeta());
+
+        return `https://www.paypal.com/smart/card-fields?${params.toString()}`;
+      }
+
+      function findCardFieldsUrl() {
+        if (window.__cardFieldsUrl) return window.__cardFieldsUrl;
+
+        for (const iframe of document.querySelectorAll("iframe")) {
+          const src = iframe.getAttribute("src") || iframe.src || "";
+          if (src.includes("/smart/card-fields") && src.includes("token=")) {
+            return src.replace(/&amp;/g, "&");
+          }
+        }
+
+        for (const entry of performance.getEntriesByType("resource")) {
+          if (entry.name.includes("/smart/card-fields") && entry.name.includes("token=")) {
+            return entry.name;
+          }
+        }
+
+        const htmlUrl = findCardFieldsUrlInHtml(paypalBox) || findCardFieldsUrlInHtml(document.documentElement);
+        if (htmlUrl) return htmlUrl;
+
+        return null;
+      }
+
+      function showBuiltCardFieldsUrl(orderId) {
+        const url = buildCardFieldsUrl(orderId);
+        if (!url) return false;
+        window.__cardFieldsUrl = url;
+        message.textContent = "Card fields URL:";
+        showResponse(url);
+        return true;
+      }
+
+      function showCardFieldsUrl() {
+        const detected = findCardFieldsUrl();
+        if (detected && detected.includes("token=")) {
+          window.__cardFieldsUrl = detected;
+          message.textContent = "Card fields URL:";
+          showResponse(detected);
+          return true;
+        }
+
+        if (lastOrderId) {
+          return showBuiltCardFieldsUrl(lastOrderId);
+        }
+
+        return false;
+      }
+
+      function watchCardFormOpen() {
+        stopFormWatcher();
+
+        const tryShowUrl = () => {
+          if (showCardFieldsUrl()) {
+            setLoading(false);
+            stopFormWatcher();
+            return true;
+          }
+          return false;
+        };
+
+        formWatcher = new MutationObserver(() => {
+          tryShowUrl();
+        });
+
+        formWatcher.observe(paypalBox, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ["style", "class", "height", "src"],
+        });
+
+        formPollTimer = window.setInterval(() => {
+          tryShowUrl();
+        }, 200);
+
+        loadingTimer = window.setTimeout(() => {
+          setLoading(false);
+          stopFormWatcher();
+          if (!showCardFieldsUrl()) {
+            message.textContent = "PayPal order token not available yet.";
+          }
+        }, 15000);
+      }
+
+      function setError(input, node, text) {
+        node.textContent = text || "";
+        if (text) input.setAttribute("aria-invalid", "true");
+        else input.removeAttribute("aria-invalid");
+      }
+
+      function getCheckout() {
+        const itemValue = item.value.trim();
+        const amountValue = Number(amount.value);
+        let ok = true;
+
+        if (itemValue.length < 3) {
+          setError(item, itemError, "Description is required.");
+          ok = false;
+        } else {
+          setError(item, itemError, "");
+        }
+
+        if (!Number.isFinite(amountValue) || amountValue < 0.01) {
+          setError(amount, amountError, "Enter amount >= 0.01.");
+          ok = false;
+        } else {
+          setError(amount, amountError, "");
+        }
+
+        if (!ok) return null;
+
+        return {
+          item: itemValue,
+          amount: amountValue.toFixed(2),
+        };
+      }
+
+      function orderPayload(checkout) {
+        return {
+          intent: "AUTHORIZE",
+          purchase_units: [
+            {
+              description: checkout.item,
+              soft_descriptor: "PAY *ONLINE LLC",
+              amount: {
+                currency_code: "USD",
+                value: checkout.amount,
+              },
+              payee: { merchant_id: MERCHANT_ID },
+            },
+          ],
+          application_context: {
+            shipping_preference: "NO_SHIPPING",
+            user_action: "PAY_NOW",
+          },
+        };
+      }
+
+      function destroyButtons() {
+        stopFormWatcher();
+        if (buttons?.close) buttons.close();
+        buttons = null;
+        paypalBox.innerHTML = "";
+      }
+
+      function renderPayPal() {
+        const checkout = getCheckout();
+        totalDisplay.textContent = money(amount.value || 0);
+
+        destroyButtons();
+        clearResponse();
+
+        if (!checkout) {
+          message.textContent = "Enter a valid description and amount to enable payment.";
+          return;
+        }
+
+        if (!window.paypal) {
+          message.textContent = "PayPal SDK failed to load.";
+          return;
+        }
+
+        message.textContent = "";
+
+        buttons = window.paypal.Buttons({
+          fundingSource: window.paypal.FUNDING.CARD,
+          style: {
+            layout: "vertical",
+            color: "black",
+            shape: "rect",
+            height: 48,
+            tagline: false,
+            label: "pay",
+          },
+          onClick() {
+            if (!getCheckout()) return false;
+            clearResponse();
+            setLoading(true, "Loading card form…");
+            watchCardFormOpen();
+            return true;
+          },
+          createOrder(_data, actions) {
+            const current = getCheckout();
+            if (!current) return actions.reject();
+            setLoading(true, "Preparing payment…");
+            return actions.order.create(orderPayload(current)).then((orderId) => {
+              lastOrderId = orderId;
+              showBuiltCardFieldsUrl(orderId);
+              return orderId;
+            });
+          },
+          onApprove(data) {
+            showApprovalResponse(data);
+          },
+          onCancel() {
+            setLoading(false);
+            stopFormWatcher();
+            message.textContent = "Payment cancelled.";
+          },
+          onError() {
+            setLoading(false);
+            stopFormWatcher();
+            message.textContent = "PayPal reported an error. Please try again.";
+          },
+        });
+
+        if (buttons.isEligible && !buttons.isEligible()) {
+          // Fallback to all available buttons if card-only is ineligible.
+          buttons = window.paypal.Buttons({
+            style: {
+              layout: "vertical",
+              color: "black",
+              shape: "rect",
+              height: 48,
+              tagline: false,
+            },
+            onClick() {
+              clearResponse();
+              setLoading(true, "Loading card form…");
+              watchCardFormOpen();
+              return true;
+            },
+            createOrder(_data, actions) {
+              const current = getCheckout();
+              if (!current) return actions.reject();
+              return actions.order.create(orderPayload(current)).then((orderId) => {
+                lastOrderId = orderId;
+                showBuiltCardFieldsUrl(orderId);
+                return orderId;
+              });
+            },
+            onApprove(data) {
+              showApprovalResponse(data);
+            },
+            onCancel() {
+              setLoading(false);
+              stopFormWatcher();
+            },
+            onError() {
+              setLoading(false);
+              stopFormWatcher();
+            },
+          });
+        }
+
+        buttons.render("#paypal-iframe-box");
+      }
+
+      function scheduleRender() {
+        window.clearTimeout(renderTimer);
+        renderTimer = window.setTimeout(renderPayPal, 250);
+      }
+
+      item.addEventListener("input", scheduleRender);
+      amount.addEventListener("input", scheduleRender);
+
+      if (window.paypal) {
+        renderPayPal();
+      } else {
+        message.textContent = "PayPal SDK failed to load.";
+      }
+    </script>
+  </body>
+</html>
