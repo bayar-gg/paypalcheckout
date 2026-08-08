@@ -225,6 +225,60 @@
         text-align: center;
       }
 
+      .loading-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: grid;
+        place-items: center;
+        background: rgb(15 23 42 / 45%);
+        backdrop-filter: blur(2px);
+      }
+
+      .loading-overlay[hidden] {
+        display: none;
+      }
+
+      .loading-panel {
+        display: grid;
+        gap: 14px;
+        justify-items: center;
+        width: min(100% - 48px, 280px);
+        padding: 24px 20px;
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: 0 18px 50px rgb(15 23 42 / 25%);
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        text-align: center;
+      }
+
+      .spinner {
+        width: 36px;
+        height: 36px;
+        border: 3px solid #e2e8f0;
+        border-top-color: #111;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      .loading-panel p {
+        margin: 0;
+        color: #334155;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      #fallback-button-container {
+        position: relative;
+        min-height: 48px;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
       @media (max-width: 520px) {
         .summary,
         .field-row {
@@ -323,6 +377,13 @@
       </section>
     </main>
 
+    <div class="loading-overlay" id="loading-overlay" hidden>
+      <div class="loading-panel" role="status" aria-live="polite">
+        <div class="spinner" aria-hidden="true"></div>
+        <p id="loading-text">Loading card form…</p>
+      </div>
+    </div>
+
     <script src="https://www.paypal.com/sdk/js?client-id=AcoSQ-EMf7YxRYtdNt1LFCvYyOe8ZDGvi7Jj7mzhEwq_uibxnztuzMVNWcAQpEuO2UBmrVVyFwbEi2a-&merchant-id=L6QMR5J7SMTLN&components=card-fields,buttons,applepay&enable-funding=applepay,card&currency=USD&intent=capture&locale=en_US"></script>
     <script>
       const MERCHANT_ID = "L6QMR5J7SMTLN";
@@ -343,12 +404,58 @@
       const payCard = document.querySelector("#pay-card");
       const cardFieldsBox = document.querySelector("#card-fields-box");
       const fallbackBox = document.querySelector("#fallback-button-container");
+      const loadingOverlay = document.querySelector("#loading-overlay");
+      const loadingText = document.querySelector("#loading-text");
       const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
       let checkout = null;
       let cardField = null;
       let appleButton = null;
       let fallbackButton = null;
+      let formWatcher = null;
+      let loadingTimer = null;
+
+      function setLoading(on, text) {
+        if (text) loadingText.textContent = text;
+        loadingOverlay.hidden = !on;
+        if (!on && loadingTimer) {
+          window.clearTimeout(loadingTimer);
+          loadingTimer = null;
+        }
+      }
+
+      function stopFormWatcher() {
+        if (formWatcher) {
+          formWatcher.disconnect();
+          formWatcher = null;
+        }
+      }
+
+      function watchCardFormOpen() {
+        stopFormWatcher();
+        const startHeight = fallbackBox.offsetHeight;
+
+        formWatcher = new MutationObserver(() => {
+          // Card form expands the PayPal button iframe/container when ready.
+          if (fallbackBox.offsetHeight > startHeight + 80) {
+            setLoading(false);
+            stopFormWatcher();
+          }
+        });
+
+        formWatcher.observe(fallbackBox, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ["style", "class", "height"],
+        });
+
+        // Safety timeout so loading never sticks forever.
+        loadingTimer = window.setTimeout(() => {
+          setLoading(false);
+          stopFormWatcher();
+        }, 12000);
+      }
 
       function money(value) {
         return new Intl.NumberFormat("en-US", {
@@ -504,17 +611,35 @@
             tagline: false,
             label: "pay",
           },
+          onClick() {
+            setLoading(true, "Loading card form…");
+            watchCardFormOpen();
+            return true;
+          },
           createOrder(_d, actions) {
+            setLoading(true, "Preparing payment…");
             return actions.order.create(orderPayload());
           },
           async onApprove(_d, actions) {
-            message.textContent = "Processing payment…";
+            setLoading(true, "Processing payment…");
             try {
               const order = await actions.order.capture();
+              setLoading(false);
               message.textContent = `Payment completed. Transaction ID: ${order.id}`;
             } catch {
+              setLoading(false);
               message.textContent = "Payment could not be completed.";
             }
+          },
+          onCancel() {
+            setLoading(false);
+            stopFormWatcher();
+            message.textContent = "Payment cancelled.";
+          },
+          onError() {
+            setLoading(false);
+            stopFormWatcher();
+            message.textContent = "PayPal reported an error. Please try again.";
           },
         });
         fallbackButton.render("#fallback-button-container");
@@ -578,13 +703,14 @@
       payCard.addEventListener("click", async () => {
         if (!cardField) return;
         payCard.disabled = true;
-        message.textContent = "Submitting card…";
+        setLoading(true, "Submitting card…");
         try {
           await cardField.submit();
         } catch (error) {
           console.error(error);
           message.textContent = error?.message || "Unable to submit card details.";
         } finally {
+          setLoading(false);
           payCard.disabled = false;
         }
       });
@@ -609,8 +735,10 @@
         summaryItem.textContent = checkout.item;
         summaryTotal.textContent = money(checkout.amount);
         destroyWidgets();
+        setLoading(true, "Loading payment options…");
         renderApplePay();
         renderCardFields();
+        window.setTimeout(() => setLoading(false), 700);
       });
 
       edit.addEventListener("click", () => {
@@ -619,6 +747,8 @@
           item.value = checkout.item;
           amount.value = checkout.amount;
         }
+        setLoading(false);
+        stopFormWatcher();
         destroyWidgets();
         paySection.hidden = true;
         form.hidden = false;
