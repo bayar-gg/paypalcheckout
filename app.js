@@ -1,29 +1,22 @@
-const createView = document.querySelector("#create-view");
-const invoiceView = document.querySelector("#invoice-view");
-const invoiceForm = document.querySelector("#invoice-form");
+const checkoutForm = document.querySelector("#checkout-form");
+const paypalSection = document.querySelector("#paypal-section");
 const emailInput = document.querySelector("#customer-email");
 const itemInput = document.querySelector("#invoice-item");
 const amountInput = document.querySelector("#invoice-amount");
-const currencySelect = document.querySelector("#invoice-currency");
-const noteInput = document.querySelector("#invoice-note");
 const emailError = document.querySelector("#customer-email-error");
 const itemError = document.querySelector("#invoice-item-error");
 const amountError = document.querySelector("#invoice-amount-error");
-const formStatus = document.querySelector("#form-status");
-const submitButton = document.querySelector("#submit-invoice");
-const invoiceNumberDisplay = document.querySelector("#invoice-number-display");
-const invoiceCustomerDisplay = document.querySelector("#invoice-customer-display");
-const invoiceIdDisplay = document.querySelector("#invoice-id-display");
-const invoiceItemDisplay = document.querySelector("#invoice-item-display");
-const invoiceTotalDisplay = document.querySelector("#invoice-total-display");
-const invoiceStatus = document.querySelector("#invoice-status");
-const invoiceTitle = document.querySelector("#invoice-title");
+const summaryEmail = document.querySelector("#summary-email");
+const summaryItem = document.querySelector("#summary-item");
+const summaryTotal = document.querySelector("#summary-total");
 const paymentMessage = document.querySelector("#payment-message");
-const payInvoiceLink = document.querySelector("#pay-invoice-link");
-const createAnotherButton = document.querySelector("#create-another");
+const editCheckoutButton = document.querySelector("#edit-checkout");
+const paypalContainer = document.querySelector("#paypal-button-container");
 
-const STORAGE_KEY = "bayar.activePaypalInvoice";
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+let activeCheckout = null;
+let paypalButtons = null;
 
 function clearFieldError(input, errorNode) {
   errorNode.textContent = "";
@@ -35,32 +28,15 @@ function setFieldError(input, errorNode, message) {
   input.setAttribute("aria-invalid", "true");
 }
 
-function formatMoney(amount, currency) {
+function formatMoney(amount) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency,
+    currency: "USD",
     minimumFractionDigits: 2,
   }).format(Number(amount));
 }
 
-function persistInvoice(invoice) {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(invoice));
-}
-
-function loadPersistedInvoice() {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function clearPersistedInvoice() {
-  window.localStorage.removeItem(STORAGE_KEY);
-}
-
-function validateInvoiceForm() {
+function validateCheckoutForm() {
   let isValid = true;
   const email = emailInput.value.trim();
   const item = itemInput.value.trim();
@@ -71,134 +47,128 @@ function validateInvoiceForm() {
   clearFieldError(amountInput, amountError);
 
   if (!emailPattern.test(email)) {
-    setFieldError(emailInput, emailError, "Masukkan email pelanggan yang valid.");
+    setFieldError(emailInput, emailError, "Enter a valid customer email.");
     isValid = false;
   }
 
   if (item.length < 3) {
-    setFieldError(itemInput, itemError, "Deskripsi tagihan minimal 3 karakter.");
+    setFieldError(itemInput, itemError, "Description must be at least 3 characters.");
     isValid = false;
   }
 
   if (!Number.isFinite(amount) || amount < 0.01) {
-    setFieldError(amountInput, amountError, "Masukkan jumlah minimal 0.01.");
+    setFieldError(amountInput, amountError, "Enter an amount of at least 0.01.");
     isValid = false;
   }
 
   return isValid;
 }
 
-function setSubmitting(isSubmitting) {
-  submitButton.disabled = isSubmitting;
-  submitButton.textContent = isSubmitting
-    ? "Membuat invoice…"
-    : "Buat & kirim invoice PayPal";
+function destroyPayPalButtons() {
+  if (paypalButtons && typeof paypalButtons.close === "function") {
+    paypalButtons.close();
+  }
+  paypalButtons = null;
+  paypalContainer.innerHTML = "";
 }
 
-function showCreateView() {
-  invoiceView.hidden = true;
-  createView.hidden = false;
-  formStatus.textContent = "";
+function renderPayPalButtons(checkout) {
+  destroyPayPalButtons();
+  paymentMessage.textContent = "";
+
+  if (!window.paypal) {
+    paymentMessage.textContent =
+      "PayPal SDK failed to load. Check your connection and refresh the page.";
+    return;
+  }
+
+  paypalButtons = window.paypal.Buttons({
+    style: {
+      layout: "vertical",
+      color: "gold",
+      shape: "rect",
+      label: "paypal",
+    },
+
+    createOrder(_data, actions) {
+      return actions.order.create({
+        purchase_units: [
+          {
+            description: checkout.item,
+            custom_id: checkout.email,
+            amount: {
+              currency_code: "USD",
+              value: checkout.amount,
+            },
+          },
+        ],
+      });
+    },
+
+    async onApprove(_data, actions) {
+      paymentMessage.textContent = "Processing payment…";
+
+      try {
+        const order = await actions.order.capture();
+        paymentMessage.textContent = `Payment completed. Transaction ID: ${order.id}`;
+      } catch {
+        paymentMessage.textContent = "Payment could not be completed. Please try again.";
+      }
+    },
+
+    onCancel() {
+      paymentMessage.textContent = "Payment cancelled. You can try again.";
+    },
+
+    onError() {
+      paymentMessage.textContent = "PayPal reported an error. Please try again.";
+    },
+  });
+
+  paypalButtons.render("#paypal-button-container");
+}
+
+function showPayPalSection(checkout) {
+  activeCheckout = checkout;
+  checkoutForm.hidden = true;
+  paypalSection.hidden = false;
+  summaryEmail.textContent = checkout.email;
+  summaryItem.textContent = checkout.item;
+  summaryTotal.textContent = formatMoney(checkout.amount);
+  renderPayPalButtons(checkout);
+}
+
+function showCheckoutForm() {
+  paypalSection.hidden = true;
+  checkoutForm.hidden = false;
+  destroyPayPalButtons();
+  paymentMessage.textContent = "";
   window.requestAnimationFrame(() => emailInput.focus());
 }
 
-function showInvoiceView(invoice) {
-  createView.hidden = true;
-  invoiceView.hidden = false;
-
-  invoiceTitle.textContent = `Invoice ${invoice.number}`;
-  invoiceNumberDisplay.textContent = invoice.number;
-  invoiceCustomerDisplay.textContent = invoice.customer;
-  invoiceIdDisplay.textContent = invoice.id || "-";
-  invoiceItemDisplay.textContent = invoice.item;
-  invoiceTotalDisplay.textContent = `${formatMoney(invoice.amount, invoice.currency)} ${invoice.currency}`;
-  invoiceStatus.textContent = invoice.status || "SENT";
-
-  const paid = String(invoice.status || "").toUpperCase() === "PAID";
-  invoiceStatus.classList.toggle("status-pill--paid", paid);
-
-  if (invoice.paymentUrl) {
-    payInvoiceLink.href = invoice.paymentUrl;
-    payInvoiceLink.hidden = false;
-    paymentMessage.textContent = paid
-      ? "Invoice sudah lunas."
-      : invoice.warning ||
-        "Invoice PayPal siap. Buka link resmi untuk membayar atau periksa email pelanggan.";
-  } else {
-    payInvoiceLink.removeAttribute("href");
-    payInvoiceLink.hidden = true;
-    paymentMessage.textContent =
-      invoice.warning ||
-      "Invoice berhasil dibuat. Link pembayaran tidak tersedia; periksa email pelanggan di PayPal.";
-  }
-}
-
-async function createInvoiceRequest(payload) {
-  const response = await fetch("/api/invoices", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  let data = null;
-  try {
-    data = await response.json();
-  } catch {
-    data = null;
-  }
-
-  if (!response.ok) {
-    throw new Error(data?.message || "Gagal membuat invoice melalui PayPal API.");
-  }
-
-  return data.invoice;
-}
-
-invoiceForm.addEventListener("submit", async (event) => {
+checkoutForm.addEventListener("submit", (event) => {
   event.preventDefault();
-  formStatus.textContent = "";
-  if (!validateInvoiceForm()) return;
+  if (!validateCheckoutForm()) return;
 
-  setSubmitting(true);
-
-  try {
-    const invoice = await createInvoiceRequest({
-      email: emailInput.value.trim(),
-      item: itemInput.value.trim(),
-      amount: amountInput.value,
-      currency: currencySelect.value,
-      note: noteInput.value.trim(),
-    });
-
-    persistInvoice(invoice);
-    showInvoiceView(invoice);
-  } catch (error) {
-    formStatus.textContent = error.message || "Gagal membuat invoice.";
-  } finally {
-    setSubmitting(false);
-  }
+  showPayPalSection({
+    email: emailInput.value.trim(),
+    item: itemInput.value.trim(),
+    amount: Number(amountInput.value).toFixed(2),
+  });
 });
 
-createAnotherButton.addEventListener("click", () => {
-  clearPersistedInvoice();
-  invoiceForm.reset();
-  currencySelect.value = "USD";
-  showCreateView();
+editCheckoutButton.addEventListener("click", () => {
+  if (activeCheckout) {
+    emailInput.value = activeCheckout.email;
+    itemInput.value = activeCheckout.item;
+    amountInput.value = activeCheckout.amount;
+  }
+  showCheckoutForm();
 });
 
 [emailInput, itemInput, amountInput].forEach((input) => {
   input.addEventListener("input", () => {
     if (!input.hasAttribute("aria-invalid")) return;
-    validateInvoiceForm();
+    validateCheckoutForm();
   });
 });
-
-const existingInvoice = loadPersistedInvoice();
-if (existingInvoice?.id || existingInvoice?.number) {
-  showInvoiceView(existingInvoice);
-} else {
-  showCreateView();
-}

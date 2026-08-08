@@ -87,7 +87,8 @@ button {
   text-transform: uppercase;
 }
 
-#invoice-form {
+#checkout-form,
+#paypal-section {
   margin-top: 28px;
 }
 
