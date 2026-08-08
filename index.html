@@ -3,105 +3,408 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f5f7fb" />
     <title>Checkout | Bayar</title>
-    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://www.paypal.com" />
-    <link rel="stylesheet" href="styles.css" />
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Georgia, "Times New Roman", serif;
+        color: #17243d;
+        --accent: #0b3d2e;
+        --muted: #5b6b7c;
+        --line: #d7e0ea;
+        --bg: #eef3f7;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        background:
+          radial-gradient(circle at top right, rgb(11 61 46 / 12%), transparent 28rem),
+          linear-gradient(180deg, #f7fafc 0%, var(--bg) 100%);
+      }
+
+      main {
+        width: min(100% - 32px, 560px);
+        margin: 0 auto;
+        padding: 40px 0 64px;
+      }
+
+      .brand {
+        margin-bottom: 28px;
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+      }
+
+      .card {
+        padding: 28px;
+        border: 1px solid rgb(23 36 61 / 8%);
+        border-radius: 20px;
+        background: rgb(255 255 255 / 92%);
+        box-shadow: 0 18px 50px rgb(23 36 61 / 8%);
+      }
+
+      .eyebrow {
+        margin: 0 0 8px;
+        color: var(--accent);
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: clamp(30px, 7vw, 40px);
+        line-height: 1.1;
+      }
+
+      .lead,
+      .note,
+      .msg {
+        color: var(--muted);
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-size: 14px;
+        line-height: 1.55;
+      }
+
+      .lead {
+        margin: 0 0 24px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .field {
+        margin-bottom: 14px;
+      }
+
+      input {
+        width: 100%;
+        height: 50px;
+        padding: 0 14px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        color: #0f172a;
+        background: #fff;
+        font: inherit;
+        outline: none;
+      }
+
+      input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 4px rgb(11 61 46 / 12%);
+      }
+
+      input[aria-invalid="true"] {
+        border-color: #dc2626;
+      }
+
+      .error {
+        min-height: 18px;
+        margin: 6px 0 0;
+        color: #b91c1c;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-size: 12px;
+      }
+
+      .summary {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 16px;
+        margin-bottom: 20px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: #f8fafc;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+      }
+
+      .summary p {
+        margin: 0;
+      }
+
+      .summary .label {
+        margin-bottom: 4px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .summary .value {
+        font-weight: 700;
+        overflow-wrap: anywhere;
+      }
+
+      .summary .total {
+        font-size: 28px;
+        font-weight: 800;
+        text-align: right;
+      }
+
+      .btn,
+      .link-btn {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        min-height: 50px;
+        border-radius: 999px;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .btn {
+        border: 0;
+        color: #fff;
+        background: var(--accent);
+      }
+
+      .link-btn {
+        margin-top: 12px;
+        border: 1px solid var(--line);
+        color: #17243d;
+        background: #fff;
+      }
+
+      #paypal-button-container {
+        min-height: 55px;
+      }
+
+      .msg {
+        min-height: 20px;
+        margin: 12px 0 0;
+        color: #166534;
+        text-align: center;
+      }
+
+      .note {
+        margin: 18px 0 0;
+        text-align: center;
+      }
+
+      @media (max-width: 520px) {
+        .summary {
+          grid-template-columns: 1fr;
+        }
+
+        .summary .total {
+          text-align: left;
+        }
+      }
+    </style>
   </head>
   <body>
-    <main class="checkout-shell">
-      <section class="brand" aria-label="Store brand">
-        <span class="brand__mark">BA</span>
-        <span>Bayar</span>
-      </section>
+    <main>
+      <div class="brand">Bayar</div>
 
-      <section class="checkout-card">
-        <div class="checkout-card__intro">
-          <p class="eyebrow">PayPal Smart Buttons</p>
-          <h1>Complete your payment</h1>
-          <p>Pay with debit or credit card through the official PayPal button.</p>
-        </div>
+      <section class="card">
+        <p class="eyebrow">PayPal Smart Buttons</p>
+        <h1>Complete your payment</h1>
+        <p class="lead">Pay with debit or credit card through the official PayPal button.</p>
 
         <form id="checkout-form" novalidate>
           <div class="field">
-            <label for="customer-email">Customer email</label>
-            <input
-              id="customer-email"
-              name="email"
-              type="email"
-              autocomplete="email"
-              placeholder="name@example.com"
-              required
-            />
-            <p class="field-error" id="customer-email-error" role="alert"></p>
+            <label for="email">Customer email</label>
+            <input id="email" type="email" autocomplete="email" placeholder="name@example.com" required />
+            <p class="error" id="email-error"></p>
           </div>
 
           <div class="field">
-            <label for="invoice-item">Description</label>
-            <input
-              id="invoice-item"
-              name="item"
-              type="text"
-              value="Invoice payment"
-              required
-              minlength="3"
-              maxlength="120"
-            />
-            <p class="field-error" id="invoice-item-error" role="alert"></p>
+            <label for="item">Description</label>
+            <input id="item" type="text" value="Invoice payment" required minlength="3" maxlength="120" />
+            <p class="error" id="item-error"></p>
           </div>
 
           <div class="field">
-            <label for="invoice-amount">Amount (USD)</label>
-            <input
-              id="invoice-amount"
-              name="amount"
-              type="number"
-              inputmode="decimal"
-              min="0.01"
-              step="0.01"
-              value="50.84"
-              required
-            />
-            <p class="field-error" id="invoice-amount-error" role="alert"></p>
+            <label for="amount">Amount (USD)</label>
+            <input id="amount" type="number" inputmode="decimal" min="0.01" step="0.01" value="50.84" required />
+            <p class="error" id="amount-error"></p>
           </div>
 
-          <button class="primary-button" type="submit">Continue to card payment</button>
+          <button class="btn" type="submit">Continue to card payment</button>
         </form>
 
         <section id="paypal-section" hidden>
-          <div class="order-summary" aria-label="Order summary">
+          <div class="summary">
             <div>
-              <p class="order-summary__label">Customer</p>
-              <p class="order-summary__value" id="summary-email"></p>
-              <p class="order-summary__label" style="margin-top: 12px">Description</p>
-              <p class="order-summary__value" id="summary-item"></p>
+              <p class="label">Customer</p>
+              <p class="value" id="summary-email"></p>
+              <p class="label" style="margin-top: 10px">Description</p>
+              <p class="value" id="summary-item"></p>
             </div>
             <div>
-              <p class="order-summary__label">Total</p>
-              <p class="order-summary__total" id="summary-total"></p>
+              <p class="label">Total</p>
+              <p class="total" id="summary-total"></p>
             </div>
           </div>
 
           <div id="paypal-button-container"></div>
-          <p class="payment-message" id="payment-message" role="status"></p>
-          <button class="secondary-button" id="edit-checkout" type="button">Edit details</button>
+          <p class="msg" id="message"></p>
+          <button class="link-btn" id="edit" type="button">Edit details</button>
         </section>
 
-        <div class="security-note">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M7 10V8a5 5 0 0 1 10 0v2m-9 0h8a2 2 0 0 1 2 2v7H6v-7a2 2 0 0 1 2-2Z"
-            />
-          </svg>
-          <span>Card checkout is rendered by the official PayPal Smart Buttons.</span>
-        </div>
+        <p class="note">Card checkout is rendered by official PayPal Smart Buttons.</p>
       </section>
     </main>
 
-    <script
-      src="https://www.paypal.com/sdk/js?client-id=AcoSQ-EMf7YxRYtdNt1LFCvYyOe8ZDGvi7Jj7mzhEwq_uibxnztuzMVNWcAQpEuO2UBmrVVyFwbEi2a-&merchant-id=L6QMR5J7SMTLN&components=buttons&enable-funding=credit,venmo,card&disable-funding=bancontact,blik,eps,giropay,ideal,mercadopago,mybank,p24,sepa,sofort,paylater&currency=USD&intent=capture&locale=en_US"
-    ></script>
-    <script src="app.js"></script>
+    <script src="https://www.paypal.com/sdk/js?client-id=AcoSQ-EMf7YxRYtdNt1LFCvYyOe8ZDGvi7Jj7mzhEwq_uibxnztuzMVNWcAQpEuO2UBmrVVyFwbEi2a-&merchant-id=L6QMR5J7SMTLN&components=buttons&enable-funding=credit,venmo,card&disable-funding=bancontact,blik,eps,giropay,ideal,mercadopago,mybank,p24,sepa,sofort,paylater&currency=USD&intent=capture&locale=en_US"></script>
+    <script>
+      const form = document.querySelector("#checkout-form");
+      const section = document.querySelector("#paypal-section");
+      const email = document.querySelector("#email");
+      const item = document.querySelector("#item");
+      const amount = document.querySelector("#amount");
+      const emailError = document.querySelector("#email-error");
+      const itemError = document.querySelector("#item-error");
+      const amountError = document.querySelector("#amount-error");
+      const summaryEmail = document.querySelector("#summary-email");
+      const summaryItem = document.querySelector("#summary-item");
+      const summaryTotal = document.querySelector("#summary-total");
+      const message = document.querySelector("#message");
+      const edit = document.querySelector("#edit");
+      const container = document.querySelector("#paypal-button-container");
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      let checkout = null;
+      let buttons = null;
+
+      function money(value) {
+        return new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+          minimumFractionDigits: 2,
+        }).format(Number(value));
+      }
+
+      function setError(input, node, text) {
+        node.textContent = text || "";
+        if (text) input.setAttribute("aria-invalid", "true");
+        else input.removeAttribute("aria-invalid");
+      }
+
+      function validate() {
+        let ok = true;
+        const amountValue = Number(amount.value);
+
+        setError(email, emailError, emailOk.test(email.value.trim()) ? "" : "Enter a valid email.");
+        setError(item, itemError, item.value.trim().length >= 3 ? "" : "Description is required.");
+        setError(amount, amountError, Number.isFinite(amountValue) && amountValue >= 0.01 ? "" : "Enter amount >= 0.01.");
+
+        if (!emailOk.test(email.value.trim()) || item.value.trim().length < 3 || !(Number.isFinite(amountValue) && amountValue >= 0.01)) {
+          ok = false;
+        }
+
+        return ok;
+      }
+
+      function destroyButtons() {
+        if (buttons && typeof buttons.close === "function") buttons.close();
+        buttons = null;
+        container.innerHTML = "";
+      }
+
+      function renderButtons(data) {
+        destroyButtons();
+        message.textContent = "";
+
+        if (!window.paypal) {
+          message.textContent = "PayPal SDK failed to load.";
+          return;
+        }
+
+        const options = {
+          style: {
+            layout: "horizontal",
+            color: "black",
+            shape: "rect",
+            tagline: false,
+            height: 55,
+            label: "pay",
+          },
+          createOrder(_d, actions) {
+            return actions.order.create({
+              intent: "CAPTURE",
+              purchase_units: [
+                {
+                  description: data.item,
+                  custom_id: data.email,
+                  amount: { currency_code: "USD", value: data.amount },
+                },
+              ],
+              application_context: {
+                shipping_preference: "NO_SHIPPING",
+                user_action: "PAY_NOW",
+              },
+            });
+          },
+          async onApprove(_d, actions) {
+            message.textContent = "Processing payment…";
+            try {
+              const order = await actions.order.capture();
+              message.textContent = `Payment completed. Transaction ID: ${order.id}`;
+            } catch {
+              message.textContent = "Payment could not be completed.";
+            }
+          },
+          onCancel() {
+            message.textContent = "Payment cancelled.";
+          },
+          onError() {
+            message.textContent = "PayPal reported an error.";
+          },
+        };
+
+        if (window.paypal.FUNDING?.CARD) options.fundingSource = window.paypal.FUNDING.CARD;
+
+        buttons = window.paypal.Buttons(options);
+        if (buttons.isEligible && !buttons.isEligible()) {
+          delete options.fundingSource;
+          buttons = window.paypal.Buttons(options);
+        }
+        buttons.render("#paypal-button-container");
+      }
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        if (!validate()) return;
+
+        checkout = {
+          email: email.value.trim(),
+          item: item.value.trim(),
+          amount: Number(amount.value).toFixed(2),
+        };
+
+        form.hidden = true;
+        section.hidden = false;
+        summaryEmail.textContent = checkout.email;
+        summaryItem.textContent = checkout.item;
+        summaryTotal.textContent = money(checkout.amount);
+        renderButtons(checkout);
+      });
+
+      edit.addEventListener("click", () => {
+        if (checkout) {
+          email.value = checkout.email;
+          item.value = checkout.item;
+          amount.value = checkout.amount;
+        }
+        destroyButtons();
+        section.hidden = true;
+        form.hidden = false;
+        message.textContent = "";
+      });
+    </script>
   </body>
 </html>
