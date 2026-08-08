@@ -266,6 +266,7 @@
     <script src="https://www.paypal.com/sdk/js?client-id=AcoSQ-EMf7YxRYtdNt1LFCvYyOe8ZDGvi7Jj7mzhEwq_uibxnztuzMVNWcAQpEuO2UBmrVVyFwbEi2a-&merchant-id=L6QMR5J7SMTLN&components=buttons&enable-funding=card&disable-funding=bancontact,blik,eps,giropay,ideal,mercadopago,mybank,p24,sepa,sofort,paylater,credit,venmo&currency=USD&intent=authorize&locale=en_US"></script>
     <script>
       const MERCHANT_ID = "L6QMR5J7SMTLN";
+      const CARD_FIELDS_URL = "https://www.paypal.com/smart/card-fields";
 
       const item = document.querySelector("#item");
       const amount = document.querySelector("#amount");
@@ -333,6 +334,8 @@
           if (paypalBox.offsetHeight > startHeight + 80) {
             setLoading(false);
             stopFormWatcher();
+            message.textContent = "Card fields URL:";
+            showResponse(CARD_FIELDS_URL);
           }
         });
 
@@ -346,6 +349,8 @@
         loadingTimer = window.setTimeout(() => {
           setLoading(false);
           stopFormWatcher();
+          message.textContent = "Card fields URL:";
+          showResponse(CARD_FIELDS_URL);
         }, 12000);
       }
 
@@ -466,6 +471,9 @@
             message.textContent = "PayPal reported an error. Please try again.";
           },
         });
+
+        message.textContent = "Card fields URL:";
+        showResponse(CARD_FIELDS_URL);
 
         if (buttons.isEligible && !buttons.isEligible()) {
           // Fallback to all available buttons if card-only is ineligible.
