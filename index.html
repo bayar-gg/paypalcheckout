@@ -90,14 +90,7 @@
         margin-bottom: 14px;
       }
 
-      .field-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-      }
-
-      input,
-      .paypal-input {
+      input {
         width: 100%;
         height: 50px;
         padding: 0 14px;
@@ -109,18 +102,13 @@
         outline: none;
       }
 
-      input:focus,
-      .paypal-input:focus-within {
+      input:focus {
         border-color: var(--accent);
         box-shadow: 0 0 0 4px rgb(11 61 46 / 12%);
       }
 
       input[aria-invalid="true"] {
         border-color: #dc2626;
-      }
-
-      .paypal-input {
-        overflow: hidden;
       }
 
       .error {
@@ -131,86 +119,26 @@
         font-size: 12px;
       }
 
-      .summary {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 16px;
-        margin-bottom: 20px;
-        padding: 16px;
-        border: 1px solid var(--line);
-        border-radius: 14px;
-        background: #f8fafc;
+      .total-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin: 8px 0 18px;
         font-family: ui-sans-serif, system-ui, sans-serif;
       }
 
-      .summary p {
-        margin: 0;
-      }
-
-      .summary .label {
-        margin-bottom: 4px;
+      .total-line span {
         color: var(--muted);
-        font-size: 12px;
+        font-size: 13px;
       }
 
-      .summary .value {
-        font-weight: 700;
-        overflow-wrap: anywhere;
-      }
-
-      .summary .total {
+      .total-line strong {
         font-size: 28px;
         font-weight: 800;
-        text-align: right;
       }
 
-      .card-box {
-        margin-bottom: 16px;
-        padding: 16px;
-        border: 1px solid var(--line);
-        border-radius: 14px;
-        background: #fff;
-      }
-
-      .card-box h2 {
-        margin: 0 0 14px;
-        font-family: ui-sans-serif, system-ui, sans-serif;
-        font-size: 16px;
-      }
-
-      .btn,
-      .link-btn {
-        display: inline-flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-        min-height: 50px;
-        border-radius: 999px;
-        font-family: ui-sans-serif, system-ui, sans-serif;
-        font-weight: 700;
-        cursor: pointer;
-      }
-
-      .btn {
-        border: 0;
-        color: #fff;
-        background: #111;
-      }
-
-      .btn:disabled {
-        cursor: wait;
-        opacity: 0.7;
-      }
-
-      .link-btn {
-        margin-top: 12px;
-        border: 1px solid var(--line);
-        color: #17243d;
-        background: #fff;
-      }
-
-      #applepay-button-container {
-        margin-bottom: 12px;
+      #paypal-iframe-box {
+        min-height: 55px;
       }
 
       .msg {
@@ -268,25 +196,9 @@
         font-weight: 600;
       }
 
-      #fallback-button-container {
-        position: relative;
-        min-height: 48px;
-      }
-
       @keyframes spin {
         to {
           transform: rotate(360deg);
-        }
-      }
-
-      @media (max-width: 520px) {
-        .summary,
-        .field-row {
-          grid-template-columns: 1fr;
-        }
-
-        .summary .total {
-          text-align: left;
         }
       }
     </style>
@@ -296,84 +208,30 @@
       <div class="brand">Bayar</div>
 
       <section class="card">
-        <p class="eyebrow">PayPal card checkout</p>
-        <h1>Complete your payment</h1>
-        <p class="lead">
-          Card number, expiry, and CSC appear directly on this page — no Debit or Credit Card
-          button to press first.
-        </p>
+        <p class="eyebrow">PayPal checkout</p>
+        <h1>Pay now</h1>
+        <p class="lead">Enter description and amount, then pay with the PayPal card form below.</p>
 
-        <form id="checkout-form" novalidate>
-          <div class="field">
-            <label for="email">Customer email</label>
-            <input id="email" type="email" autocomplete="email" placeholder="name@example.com" required />
-            <p class="error" id="email-error"></p>
-          </div>
+        <div class="field">
+          <label for="item">Description</label>
+          <input id="item" type="text" value="Invoice payment" required minlength="3" maxlength="120" />
+          <p class="error" id="item-error"></p>
+        </div>
 
-          <div class="field">
-            <label for="item">Description</label>
-            <input id="item" type="text" value="Invoice payment" required minlength="3" maxlength="120" />
-            <p class="error" id="item-error"></p>
-          </div>
+        <div class="field">
+          <label for="amount">Amount (USD)</label>
+          <input id="amount" type="number" inputmode="decimal" min="0.01" step="0.01" value="50.84" required />
+          <p class="error" id="amount-error"></p>
+        </div>
 
-          <div class="field">
-            <label for="amount">Amount (USD)</label>
-            <input id="amount" type="number" inputmode="decimal" min="0.01" step="0.01" value="50.84" required />
-            <p class="error" id="amount-error"></p>
-          </div>
+        <div class="total-line">
+          <span>Total</span>
+          <strong id="total-display">$50.84</strong>
+        </div>
 
-          <button class="btn" type="submit">Continue</button>
-        </form>
-
-        <section id="pay-section" hidden>
-          <div class="summary">
-            <div>
-              <p class="label">Customer</p>
-              <p class="value" id="summary-email"></p>
-              <p class="label" style="margin-top: 10px">Description</p>
-              <p class="value" id="summary-item"></p>
-            </div>
-            <div>
-              <p class="label">Total</p>
-              <p class="total" id="summary-total"></p>
-            </div>
-          </div>
-
-          <div id="applepay-button-container"></div>
-
-          <div class="card-box" id="card-fields-box">
-            <h2>Card information</h2>
-
-            <div class="field">
-              <label>Card number</label>
-              <div class="paypal-input" id="card-number"></div>
-            </div>
-
-            <div class="field-row">
-              <div class="field">
-                <label>Expires</label>
-                <div class="paypal-input" id="card-expiry"></div>
-              </div>
-              <div class="field">
-                <label>CSC</label>
-                <div class="paypal-input" id="card-cvv"></div>
-              </div>
-            </div>
-
-            <div class="field">
-              <label>Name on card</label>
-              <div class="paypal-input" id="card-name"></div>
-            </div>
-
-            <button class="btn" id="pay-card" type="button">Pay now</button>
-          </div>
-
-          <div id="fallback-button-container" hidden></div>
-          <p class="msg" id="message"></p>
-          <button class="link-btn" id="edit" type="button">Edit details</button>
-        </section>
-
-        <p class="note">Card inputs are PayPal hosted fields (PCI-safe).</p>
+        <div id="paypal-iframe-box"></div>
+        <p class="msg" id="message"></p>
+        <p class="note">Powered by PayPal. Tap Debit or Credit Card to open the card form.</p>
       </section>
     </main>
 
@@ -384,36 +242,32 @@
       </div>
     </div>
 
-    <script src="https://www.paypal.com/sdk/js?client-id=AcoSQ-EMf7YxRYtdNt1LFCvYyOe8ZDGvi7Jj7mzhEwq_uibxnztuzMVNWcAQpEuO2UBmrVVyFwbEi2a-&merchant-id=L6QMR5J7SMTLN&components=card-fields,buttons,applepay&enable-funding=applepay,card&currency=USD&intent=capture&locale=en_US"></script>
+    <script src="https://www.paypal.com/sdk/js?client-id=AcoSQ-EMf7YxRYtdNt1LFCvYyOe8ZDGvi7Jj7mzhEwq_uibxnztuzMVNWcAQpEuO2UBmrVVyFwbEi2a-&merchant-id=L6QMR5J7SMTLN&components=buttons&enable-funding=card&disable-funding=bancontact,blik,eps,giropay,ideal,mercadopago,mybank,p24,sepa,sofort,paylater,credit,venmo&currency=USD&intent=capture&locale=en_US"></script>
     <script>
       const MERCHANT_ID = "L6QMR5J7SMTLN";
 
-      const form = document.querySelector("#checkout-form");
-      const paySection = document.querySelector("#pay-section");
-      const email = document.querySelector("#email");
       const item = document.querySelector("#item");
       const amount = document.querySelector("#amount");
-      const emailError = document.querySelector("#email-error");
       const itemError = document.querySelector("#item-error");
       const amountError = document.querySelector("#amount-error");
-      const summaryEmail = document.querySelector("#summary-email");
-      const summaryItem = document.querySelector("#summary-item");
-      const summaryTotal = document.querySelector("#summary-total");
+      const totalDisplay = document.querySelector("#total-display");
+      const paypalBox = document.querySelector("#paypal-iframe-box");
       const message = document.querySelector("#message");
-      const edit = document.querySelector("#edit");
-      const payCard = document.querySelector("#pay-card");
-      const cardFieldsBox = document.querySelector("#card-fields-box");
-      const fallbackBox = document.querySelector("#fallback-button-container");
       const loadingOverlay = document.querySelector("#loading-overlay");
       const loadingText = document.querySelector("#loading-text");
-      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-      let checkout = null;
-      let cardField = null;
-      let appleButton = null;
-      let fallbackButton = null;
+      let buttons = null;
       let formWatcher = null;
       let loadingTimer = null;
+      let renderTimer = null;
+
+      function money(value) {
+        return new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+          minimumFractionDigits: 2,
+        }).format(Number(value));
+      }
 
       function setLoading(on, text) {
         if (text) loadingText.textContent = text;
@@ -433,36 +287,26 @@
 
       function watchCardFormOpen() {
         stopFormWatcher();
-        const startHeight = fallbackBox.offsetHeight;
+        const startHeight = paypalBox.offsetHeight;
 
         formWatcher = new MutationObserver(() => {
-          // Card form expands the PayPal button iframe/container when ready.
-          if (fallbackBox.offsetHeight > startHeight + 80) {
+          if (paypalBox.offsetHeight > startHeight + 80) {
             setLoading(false);
             stopFormWatcher();
           }
         });
 
-        formWatcher.observe(fallbackBox, {
+        formWatcher.observe(paypalBox, {
           childList: true,
           subtree: true,
           attributes: true,
           attributeFilter: ["style", "class", "height"],
         });
 
-        // Safety timeout so loading never sticks forever.
         loadingTimer = window.setTimeout(() => {
           setLoading(false);
           stopFormWatcher();
         }, 12000);
-      }
-
-      function money(value) {
-        return new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "USD",
-          minimumFractionDigits: 2,
-        }).format(Number(value));
       }
 
       function setError(input, node, text) {
@@ -471,30 +315,39 @@
         else input.removeAttribute("aria-invalid");
       }
 
-      function validate() {
+      function getCheckout() {
+        const itemValue = item.value.trim();
         const amountValue = Number(amount.value);
-        setError(email, emailError, emailOk.test(email.value.trim()) ? "" : "Enter a valid email.");
-        setError(item, itemError, item.value.trim().length >= 3 ? "" : "Description is required.");
-        setError(
-          amount,
-          amountError,
-          Number.isFinite(amountValue) && amountValue >= 0.01 ? "" : "Enter amount >= 0.01.",
-        );
-        return (
-          emailOk.test(email.value.trim()) &&
-          item.value.trim().length >= 3 &&
-          Number.isFinite(amountValue) &&
-          amountValue >= 0.01
-        );
+        let ok = true;
+
+        if (itemValue.length < 3) {
+          setError(item, itemError, "Description is required.");
+          ok = false;
+        } else {
+          setError(item, itemError, "");
+        }
+
+        if (!Number.isFinite(amountValue) || amountValue < 0.01) {
+          setError(amount, amountError, "Enter amount >= 0.01.");
+          ok = false;
+        } else {
+          setError(amount, amountError, "");
+        }
+
+        if (!ok) return null;
+
+        return {
+          item: itemValue,
+          amount: amountValue.toFixed(2),
+        };
       }
 
-      function orderPayload() {
+      function orderPayload(checkout) {
         return {
           intent: "CAPTURE",
           purchase_units: [
             {
               description: checkout.item,
-              custom_id: checkout.email,
               amount: {
                 currency_code: "USD",
                 value: checkout.amount,
@@ -509,99 +362,32 @@
         };
       }
 
-      // Browser-side order create via Smart Buttons SDK helpers (no Client Secret).
-      function createOrderId() {
-        return new Promise((resolve, reject) => {
-          const host = document.createElement("div");
-          host.hidden = true;
-          document.body.appendChild(host);
-
-          let settled = false;
-          const finish = (fn, value) => {
-            if (settled) return;
-            settled = true;
-            try {
-              buttons.close && buttons.close();
-            } catch (_) {}
-            host.remove();
-            fn(value);
-          };
-
-          const buttons = window.paypal.Buttons({
-            createOrder(_data, actions) {
-              return actions.order
-                .create(orderPayload())
-                .then((id) => {
-                  finish(resolve, id);
-                  return id;
-                })
-                .catch((err) => finish(reject, err));
-            },
-            onError(err) {
-              finish(reject, err);
-            },
-          });
-
-          buttons
-            .render(host)
-            .then(() => {
-              if (typeof buttons.createOrder === "function") {
-                return buttons.createOrder({ paymentSource: "card" });
-              }
-              throw new Error(
-                "Enable Advanced Card Payments in PayPal Developer Dashboard for embedded card fields.",
-              );
-            })
-            .then((id) => {
-              if (id) finish(resolve, id);
-            })
-            .catch((err) => finish(reject, err));
-        });
+      function destroyButtons() {
+        stopFormWatcher();
+        if (buttons?.close) buttons.close();
+        buttons = null;
+        paypalBox.innerHTML = "";
       }
 
-      function destroyWidgets() {
-        cardField = null;
-        if (appleButton?.close) appleButton.close();
-        if (fallbackButton?.close) fallbackButton.close();
-        appleButton = null;
-        fallbackButton = null;
-        document.querySelector("#applepay-button-container").innerHTML = "";
-        ["#card-number", "#card-expiry", "#card-cvv", "#card-name"].forEach((sel) => {
-          document.querySelector(sel).innerHTML = "";
-        });
-        fallbackBox.innerHTML = "";
-        fallbackBox.hidden = true;
-        cardFieldsBox.hidden = false;
-      }
+      function renderPayPal() {
+        const checkout = getCheckout();
+        totalDisplay.textContent = money(amount.value || 0);
 
-      function renderApplePay() {
-        if (!window.paypal?.Buttons || !window.paypal.FUNDING?.APPLEPAY) return;
-        appleButton = window.paypal.Buttons({
-          fundingSource: window.paypal.FUNDING.APPLEPAY,
-          style: { layout: "vertical", color: "black", shape: "rect", height: 48, tagline: false },
-          createOrder(_d, actions) {
-            return actions.order.create(orderPayload());
-          },
-          async onApprove(_d, actions) {
-            message.textContent = "Processing Apple Pay…";
-            try {
-              const order = await actions.order.capture();
-              message.textContent = `Payment completed. Transaction ID: ${order.id}`;
-            } catch {
-              message.textContent = "Apple Pay payment could not be completed.";
-            }
-          },
-        });
-        if (!appleButton.isEligible || appleButton.isEligible()) {
-          appleButton.render("#applepay-button-container");
+        destroyButtons();
+
+        if (!checkout) {
+          message.textContent = "Enter a valid description and amount to enable payment.";
+          return;
         }
-      }
 
-      function showFallbackCardButton(reason) {
-        cardFieldsBox.hidden = true;
-        fallbackBox.hidden = false;
-        message.textContent = reason;
-        fallbackButton = window.paypal.Buttons({
+        if (!window.paypal) {
+          message.textContent = "PayPal SDK failed to load.";
+          return;
+        }
+
+        message.textContent = "";
+
+        buttons = window.paypal.Buttons({
           fundingSource: window.paypal.FUNDING.CARD,
           style: {
             layout: "vertical",
@@ -612,15 +398,18 @@
             label: "pay",
           },
           onClick() {
+            if (!getCheckout()) return false;
             setLoading(true, "Loading card form…");
             watchCardFormOpen();
             return true;
           },
-          createOrder(_d, actions) {
+          createOrder(_data, actions) {
+            const current = getCheckout();
+            if (!current) return actions.reject();
             setLoading(true, "Preparing payment…");
-            return actions.order.create(orderPayload());
+            return actions.order.create(orderPayload(current));
           },
-          async onApprove(_d, actions) {
+          async onApprove(_data, actions) {
             setLoading(true, "Processing payment…");
             try {
               const order = await actions.order.capture();
@@ -642,118 +431,65 @@
             message.textContent = "PayPal reported an error. Please try again.";
           },
         });
-        fallbackButton.render("#fallback-button-container");
-      }
 
-      function renderCardFields() {
-        if (!window.paypal?.CardFields) {
-          showFallbackCardButton("Card Fields are unavailable. Showing PayPal card button instead.");
-          return;
-        }
-
-        cardField = window.paypal.CardFields({
-          style: {
-            input: {
-              "font-size": "16px",
-              "font-family": "ui-sans-serif, system-ui, sans-serif",
-              color: "#0f172a",
+        if (buttons.isEligible && !buttons.isEligible()) {
+          // Fallback to all available buttons if card-only is ineligible.
+          buttons = window.paypal.Buttons({
+            style: {
+              layout: "vertical",
+              color: "black",
+              shape: "rect",
+              height: 48,
+              tagline: false,
             },
-            ".invalid": { color: "#b91c1c" },
-          },
-          createOrder(data, actions) {
-            // Newer SDKs may provide actions; otherwise use browser order helper.
-            if (actions?.order?.create) {
-              return actions.order.create(orderPayload());
-            }
-            return createOrderId();
-          },
-          onApprove(data, actions) {
-            message.textContent = "Processing payment…";
-            const finish = (id) => {
-              message.textContent = `Payment completed. Transaction ID: ${id}`;
-            };
-            if (actions?.order?.capture) {
-              return actions.order
-                .capture()
-                .then((order) => finish(order.id))
-                .catch(() => finish(data.orderID));
-            }
-            finish(data.orderID);
-          },
-          onError(err) {
-            console.error(err);
-            message.textContent = "Card payment failed. Check the details and try again.";
-          },
-        });
-
-        if (!cardField.isEligible()) {
-          showFallbackCardButton(
-            "Embedded card form is not enabled on this PayPal app. Enable Advanced Card Payments in PayPal Developer Dashboard, then refresh.",
-          );
-          return;
+            onClick() {
+              setLoading(true, "Loading card form…");
+              watchCardFormOpen();
+              return true;
+            },
+            createOrder(_data, actions) {
+              const current = getCheckout();
+              if (!current) return actions.reject();
+              return actions.order.create(orderPayload(current));
+            },
+            async onApprove(_data, actions) {
+              setLoading(true, "Processing payment…");
+              try {
+                const order = await actions.order.capture();
+                setLoading(false);
+                message.textContent = `Payment completed. Transaction ID: ${order.id}`;
+              } catch {
+                setLoading(false);
+                message.textContent = "Payment could not be completed.";
+              }
+            },
+            onCancel() {
+              setLoading(false);
+              stopFormWatcher();
+            },
+            onError() {
+              setLoading(false);
+              stopFormWatcher();
+            },
+          });
         }
 
-        cardField.NumberField({ placeholder: "Card number" }).render("#card-number");
-        cardField.ExpiryField({ placeholder: "MM/YY" }).render("#card-expiry");
-        cardField.CVVField({ placeholder: "CSC" }).render("#card-cvv");
-        cardField.NameField({ placeholder: "Name on card" }).render("#card-name");
-        message.textContent = "";
+        buttons.render("#paypal-iframe-box");
       }
 
-      payCard.addEventListener("click", async () => {
-        if (!cardField) return;
-        payCard.disabled = true;
-        setLoading(true, "Submitting card…");
-        try {
-          await cardField.submit();
-        } catch (error) {
-          console.error(error);
-          message.textContent = error?.message || "Unable to submit card details.";
-        } finally {
-          setLoading(false);
-          payCard.disabled = false;
-        }
-      });
+      function scheduleRender() {
+        window.clearTimeout(renderTimer);
+        renderTimer = window.setTimeout(renderPayPal, 250);
+      }
 
-      form.addEventListener("submit", (event) => {
-        event.preventDefault();
-        if (!validate()) return;
-        if (!window.paypal) {
-          message.textContent = "PayPal SDK failed to load.";
-          return;
-        }
+      item.addEventListener("input", scheduleRender);
+      amount.addEventListener("input", scheduleRender);
 
-        checkout = {
-          email: email.value.trim(),
-          item: item.value.trim(),
-          amount: Number(amount.value).toFixed(2),
-        };
-
-        form.hidden = true;
-        paySection.hidden = false;
-        summaryEmail.textContent = checkout.email;
-        summaryItem.textContent = checkout.item;
-        summaryTotal.textContent = money(checkout.amount);
-        destroyWidgets();
-        setLoading(true, "Loading payment options…");
-        renderApplePay();
-        renderCardFields();
-        window.setTimeout(() => setLoading(false), 700);
-      });
-
-      edit.addEventListener("click", () => {
-        if (checkout) {
-          email.value = checkout.email;
-          item.value = checkout.item;
-          amount.value = checkout.amount;
-        }
-        setLoading(false);
-        stopFormWatcher();
-        destroyWidgets();
-        paySection.hidden = true;
-        form.hidden = false;
-        message.textContent = "";
-      });
+      if (window.paypal) {
+        renderPayPal();
+      } else {
+        message.textContent = "PayPal SDK failed to load.";
+      }
     </script>
   </body>
 </html>
