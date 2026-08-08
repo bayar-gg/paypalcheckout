@@ -41,6 +41,26 @@ npm start
 
 Buka `http://localhost:3000`.
 
+## GitHub Codespaces
+
+Repo ini punya `.devcontainer/devcontainer.json` untuk build otomatis di Codespaces.
+
+1. Buka Codespace repo ini.
+2. Pastikan `.env` sudah berisi `PAYPAL_CLIENT_ID` dan `PAYPAL_CLIENT_SECRET`.
+3. Jika server belum jalan:
+
+```bash
+cp -n .env.example .env
+npm install
+npm start
+```
+
+4. Buka port **3000** dari panel Ports / forwarded URL Codespace
+   (contoh: `https://<codespace-name>-3000.app.github.dev`).
+
+Catatan: agent cloud ini tidak punya akses API ke Codespace pribadi Anda, jadi build di
+`*.github.dev` perlu dijalankan dari terminal Codespace tersebut setelah branch terbaru di-pull.
+
 ## Endpoint
 
 - `GET /api/health` — status server dan apakah kredensial terisi

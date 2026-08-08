@@ -1,0 +1,24 @@
+{
+  "name": "Bayar PayPal Invoice",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "Bayar Invoice Server",
+      "onAutoForward": "notify"
+    }
+  },
+  "postCreateCommand": "cp -n .env.example .env && npm install",
+  "postStartCommand": "npm start",
+  "customizations": {
+    "vscode": {
+      "extensions": ["dbaeumer.vscode-eslint"],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  "remoteEnv": {
+    "PORT": "3000"
+  }
+}
