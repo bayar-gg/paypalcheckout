@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f7fb" />
+    <title>Checkout | Toko Anda</title>
+    <link rel="preconnect" href="https://www.paypal.com" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="checkout-shell">
+      <section class="brand" aria-label="Identitas toko">
+        <span class="brand__mark">TA</span>
+        <span>Toko Anda</span>
+      </section>
+
+      <section class="checkout-card">
+        <div class="checkout-card__intro">
+          <p class="eyebrow">Checkout aman</p>
+          <h1>Selesaikan pembayaran</h1>
+          <p>Periksa pesanan Anda sebelum melanjutkan ke PayPal.</p>
+        </div>
+
+        <div class="order-summary" aria-label="Ringkasan pesanan">
+          <div>
+            <p class="order-summary__label">Invoice</p>
+            <p class="order-summary__value">INV-2026-001</p>
+          </div>
+          <div>
+            <p class="order-summary__label">Total pembayaran</p>
+            <p class="order-summary__total">$50.84 USD</p>
+          </div>
+        </div>
+
+        <button class="primary-button" id="open-customer-modal" type="button">
+          Lanjut ke pembayaran
+        </button>
+
+        <div class="security-note">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M7 10V8a5 5 0 0 1 10 0v2m-9 0h8a2 2 0 0 1 2 2v7H6v-7a2 2 0 0 1 2-2Z"
+            />
+          </svg>
+          <span>Login dan detail pembayaran diproses langsung oleh PayPal.</span>
+        </div>
+      </section>
+    </main>
+
+    <dialog class="customer-modal" id="customer-modal">
+      <div class="customer-modal__header">
+        <div>
+          <p class="eyebrow">Informasi pelanggan</p>
+          <h2>Masukkan data Anda</h2>
+        </div>
+        <button class="icon-button" id="close-customer-modal" type="button" aria-label="Tutup">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m6 6 12 12M18 6 6 18" />
+          </svg>
+        </button>
+      </div>
+
+      <form id="customer-form" novalidate>
+        <label for="customer-id">Email atau username</label>
+        <input
+          id="customer-id"
+          name="customerId"
+          type="text"
+          autocomplete="username"
+          placeholder="nama@contoh.com"
+          required
+          minlength="3"
+        />
+        <p class="field-error" id="customer-id-error" role="alert"></p>
+
+        <p class="privacy-copy">
+          Data ini digunakan oleh Toko Anda untuk mengidentifikasi pesanan. Kami tidak meminta
+          password PayPal.
+        </p>
+
+        <button class="primary-button" type="submit">Tampilkan opsi PayPal</button>
+      </form>
+
+      <section class="paypal-section" id="paypal-section" hidden>
+        <div class="customer-confirmation">
+          <span>Pembayaran untuk</span>
+          <strong id="customer-display"></strong>
+          <button id="edit-customer" type="button">Ubah</button>
+        </div>
+        <div id="paypal-button-container"></div>
+        <p class="payment-message" id="payment-message" role="status"></p>
+      </section>
+    </dialog>
+
+    <script src="https://www.paypal.com/sdk/js?client-id=test&currency=USD&intent=capture"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
